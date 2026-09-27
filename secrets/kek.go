@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,9 +33,11 @@ const (
 // as long as the same env is supplied). File-backed KEK survives volume recreate
 // but is lost if the volume is deleted without a pinned env.
 type Status struct {
-	Source Source `json:"source"`
-	Pinned bool   `json:"pinned"`
-	Path   string `json:"path,omitempty"`
+	Source          Source `json:"source"`
+	Pinned          bool   `json:"pinned"`
+	Path            string `json:"path,omitempty"`
+	Format          string `json:"format,omitempty"`
+	MigrationNeeded bool   `json:"migration_needed,omitempty"`
 }
 
 // Inspect reports KEK status without creating files.
@@ -43,17 +46,39 @@ func Inspect(dir string, getenv func(string) string) Status {
 	if getenv == nil {
 		getenv = os.Getenv
 	}
+	status := Status{}
 	if strings.TrimSpace(getenv(EnvKEK)) != "" {
-		return Status{Source: SourceEnv, Pinned: true}
+		status = Status{Source: SourceEnv, Pinned: true}
+	} else {
+		path := filepath.Join(dir, FileKEK)
+		if st, err := os.Stat(path); err == nil && !st.IsDir() && st.Size() == int64(kekBytes) {
+			status = Status{Source: SourceFile, Path: path}
+		} else {
+			status = Status{Source: SourceNone, Path: path}
+		}
 	}
-	path := filepath.Join(dir, FileKEK)
-	if st, err := os.Stat(path); err == nil && !st.IsDir() && st.Size() >= int64(kekBytes) {
-		return Status{Source: SourceFile, Pinned: false, Path: path}
+	if raw, err := os.ReadFile(filepath.Join(dir, FileStore)); err == nil {
+		var header struct {
+			Version int    `json:"version"`
+			Salt    string `json:"salt"`
+		}
+		if json.Unmarshal(raw, &header) == nil {
+			switch header.Version {
+			case 1:
+				status.Format, status.MigrationNeeded = "v1-legacy", true
+			case 2:
+				if header.Salt != "" {
+					status.Format = "v2-scrypt"
+				} else {
+					status.Format = "v2-raw-key"
+				}
+			}
+		}
 	}
-	return Status{Source: SourceNone, Pinned: false, Path: path}
+	return status
 }
 
-// DeriveKEK normalizes arbitrary material to a 32-byte AES key via SHA-256.
+// DeriveKEK reproduces the v1 SHA-256 key only for legacy-store migration.
 func DeriveKEK(material []byte) []byte {
 	sum := sha256.Sum256(material)
 	out := make([]byte, kekBytes)
@@ -61,8 +86,8 @@ func DeriveKEK(material []byte) []byte {
 	return out
 }
 
-// ParseEnvKEK decodes WHALESHELL_SECRETS_KEK values.
-// Accepts raw passphrase, standard base64, or hex (≥16 bytes decoded).
+// ParseEnvKEK reproduces the v1 env-key format for legacy-store migration.
+// New stores use resolveKEK, which salts passwords and uses random keys directly.
 func ParseEnvKEK(v string) ([]byte, error) {
 	v = strings.TrimSpace(v)
 	if v == "" {
@@ -75,6 +100,17 @@ func ParseEnvKEK(v string) ([]byte, error) {
 		return DeriveKEK(b), nil
 	}
 	return DeriveKEK([]byte(v)), nil
+}
+
+// decodeRawKEK accepts only exactly 32 decoded bytes. Unlike a password, this
+// random key is used directly and is never sent through a password KDF.
+func decodeRawKEK(v string) ([]byte, bool) {
+	for _, decode := range []func(string) ([]byte, error){base64.StdEncoding.DecodeString, hex.DecodeString} {
+		if b, err := decode(v); err == nil && len(b) == kekBytes {
+			return b, true
+		}
+	}
+	return nil, false
 }
 
 // Warning returns an operator-facing hint when KEK is not pinned via env.

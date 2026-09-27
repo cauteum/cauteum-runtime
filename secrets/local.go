@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"golang.org/x/crypto/scrypt"
 )
 
 // LocalEncrypted is an AES-GCM file-backed Store keyed by logical names
@@ -23,11 +25,13 @@ type LocalEncrypted struct {
 	mu   sync.Mutex
 	dir  string
 	aead cipher.AEAD
+	salt string            // base64 salt for a password-derived v2 KEK
 	data map[string]string // plaintext cache; disk holds ciphertext only
 }
 
 type diskBlob struct {
 	Version int               `json:"version"`
+	Salt    string            `json:"salt,omitempty"`
 	Entries map[string]string `json:"entries"` // key → base64(nonce|ciphertext)
 }
 
@@ -37,27 +41,97 @@ func OpenLocal(dir string) (*LocalEncrypted, error) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, err
 	}
-	kek, err := loadOrCreateKEK(dir, os.Getenv)
+	var existing diskBlob
+	if raw, err := os.ReadFile(filepath.Join(dir, FileStore)); err == nil {
+		if err := json.Unmarshal(raw, &existing); err != nil {
+			return nil, fmt.Errorf("secrets: parse: %w", err)
+		}
+		if existing.Version != 1 && existing.Version != 2 {
+			return nil, fmt.Errorf("secrets: unsupported store version %d", existing.Version)
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+	legacy := existing.Version == 1
+	kek, salt, err := resolveKEK(dir, os.Getenv, existing, legacy, false)
 	if err != nil {
 		return nil, err
 	}
-	block, err := aes.NewCipher(kek)
-	if err != nil {
-		return nil, err
-	}
-	aead, err := cipher.NewGCM(block)
+	aead, err := newAEAD(kek)
 	if err != nil {
 		return nil, err
 	}
 	s := &LocalEncrypted{
 		dir:  dir,
 		aead: aead,
+		salt: salt,
 		data: map[string]string{},
 	}
 	if err := s.loadLocked(); err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
+	if legacy {
+		// The old ciphertext stays intact until the new file is synced and renamed.
+		newKey, newSalt, err := resolveKEK(dir, os.Getenv, diskBlob{}, false, true)
+		if err != nil {
+			return nil, err
+		}
+		newCipher, err := newAEAD(newKey)
+		if err != nil {
+			return nil, err
+		}
+		s.aead, s.salt = newCipher, newSalt
+		if err := s.flushLocked(); err != nil {
+			return nil, fmt.Errorf("secrets: migrate legacy store: %w", err)
+		}
+	}
 	return s, nil
+}
+
+func newAEAD(key []byte) (cipher.AEAD, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	return cipher.NewGCM(block)
+}
+
+func resolveKEK(dir string, getenv func(string) string, blob diskBlob, legacy, migration bool) ([]byte, string, error) {
+	v := strings.TrimSpace(getenv(EnvKEK))
+	if v == "" {
+		key, err := loadOrCreateKEK(dir, func(string) string { return "" })
+		return key, "", err
+	}
+	if legacy {
+		key, err := ParseEnvKEK(v)
+		return key, "", err
+	}
+	if raw, ok := decodeRawKEK(v); ok {
+		if blob.Salt != "" {
+			return nil, "", fmt.Errorf("secrets: store needs password-derived KEK")
+		}
+		return raw, "", nil
+	}
+	if len(v) < 16 && !migration && blob.Version == 0 {
+		return nil, "", fmt.Errorf("secrets: %s password must be at least 16 characters", EnvKEK)
+	}
+	salt := blob.Salt
+	if salt == "" && blob.Version == 2 {
+		return nil, "", fmt.Errorf("secrets: store needs raw 32-byte KEK")
+	}
+	if salt == "" {
+		b := make([]byte, 16)
+		if _, err := io.ReadFull(rand.Reader, b); err != nil {
+			return nil, "", err
+		}
+		salt = base64.StdEncoding.EncodeToString(b)
+	}
+	b, err := base64.StdEncoding.DecodeString(salt)
+	if err != nil || len(b) != 16 {
+		return nil, "", fmt.Errorf("secrets: invalid KEK salt")
+	}
+	key, err := scrypt.Key([]byte(v), b, 1<<15, 8, 1, kekBytes)
+	return key, salt, err
 }
 
 // loadOrCreateKEK resolves the KEK using Inspect order: env → file → generate file.
@@ -69,16 +143,34 @@ func loadOrCreateKEK(dir string, getenv func(string) string) ([]byte, error) {
 		return ParseEnvKEK(v)
 	}
 	path := filepath.Join(dir, FileKEK)
-	if b, err := os.ReadFile(path); err == nil && len(b) >= kekBytes {
-		out := make([]byte, kekBytes)
-		copy(out, b[:kekBytes])
-		return out, nil
+	if b, err := os.ReadFile(path); err == nil {
+		if len(b) != kekBytes {
+			return nil, fmt.Errorf("secrets: invalid %s length", FileKEK)
+		}
+		return b, nil
+	} else if !os.IsNotExist(err) {
+		return nil, err
 	}
 	b := make([]byte, kekBytes)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
 		return nil, err
 	}
-	if err := os.WriteFile(path, b, 0o600); err != nil {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := f.Write(b); err != nil {
+		f.Close()
+		return nil, err
+	}
+	if err := f.Sync(); err != nil {
+		f.Close()
+		return nil, err
+	}
+	if err := f.Close(); err != nil {
+		return nil, err
+	}
+	if err := syncDirectory(dir); err != nil {
 		return nil, err
 	}
 	return b, nil
@@ -107,7 +199,7 @@ func (s *LocalEncrypted) loadLocked() error {
 }
 
 func (s *LocalEncrypted) flushLocked() error {
-	blob := diskBlob{Version: 1, Entries: map[string]string{}}
+	blob := diskBlob{Version: 2, Salt: s.salt, Entries: map[string]string{}}
 	for k, v := range s.data {
 		enc, err := s.encrypt(v)
 		if err != nil {
@@ -120,11 +212,31 @@ func (s *LocalEncrypted) flushLocked() error {
 		return err
 	}
 	path := filepath.Join(s.dir, FileStore)
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, raw, 0o600); err != nil {
+	f, err := os.CreateTemp(s.dir, ".secrets-*.tmp")
+	if err != nil {
 		return err
 	}
-	return os.Rename(tmp, path)
+	tmp := f.Name()
+	defer os.Remove(tmp)
+	if err := f.Chmod(0o600); err != nil {
+		f.Close()
+		return err
+	}
+	if _, err := f.Write(raw); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		return err
+	}
+	return syncDirectory(s.dir)
 }
 
 func (s *LocalEncrypted) encrypt(plain string) (string, error) {
@@ -208,15 +320,20 @@ func ProviderKey(providerName, envKey string) string {
 }
 
 // PutProviderCredentials writes all credential values for a provider instance.
-func (s *LocalEncrypted) PutProviderCredentials(ctx context.Context, providerName string, creds map[string]string) error {
+func (s *LocalEncrypted) PutProviderCredentials(_ context.Context, providerName string, creds map[string]string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	changed := false
 	for k, v := range creds {
 		k = strings.TrimSpace(k)
 		if k == "" || strings.TrimSpace(v) == "" {
 			continue
 		}
-		if err := s.Put(ctx, ProviderKey(providerName, k), v); err != nil {
-			return err
-		}
+		s.data[ProviderKey(providerName, k)] = v
+		changed = true
+	}
+	if changed {
+		return s.flushLocked()
 	}
 	return nil
 }

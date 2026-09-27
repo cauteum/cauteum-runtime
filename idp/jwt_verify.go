@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"strings"
 )
 
 func verifyRS256(signingInput, sigB64 string, pub *rsa.PublicKey) ([]byte, error) {
@@ -17,18 +18,10 @@ func verifyRS256(signingInput, sigB64 string, pub *rsa.PublicKey) ([]byte, error
 	if err := rsa.VerifyPKCS1v15(pub, crypto.SHA256, sum[:], sig); err != nil {
 		return nil, fmt.Errorf("oidc: signature: %w", err)
 	}
-	payload, err := base64.RawURLEncoding.DecodeString(stringsSplitPayload(signingInput))
+	_, encodedPayload, _ := strings.Cut(signingInput, ".")
+	payload, err := base64.RawURLEncoding.DecodeString(encodedPayload)
 	if err != nil {
 		return nil, fmt.Errorf("oidc: payload decode: %w", err)
 	}
 	return payload, nil
-}
-
-func stringsSplitPayload(signingInput string) string {
-	for i := 0; i < len(signingInput); i++ {
-		if signingInput[i] == '.' {
-			return signingInput[i+1:]
-		}
-	}
-	return ""
 }
