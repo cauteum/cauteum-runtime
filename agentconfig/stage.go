@@ -237,7 +237,7 @@ func Stage(opt Options) (Staged, error) {
 			return Staged{}, err
 		}
 		envSnippet := fmt.Sprintf("WHALESHELL_AGENT_HARNESS=%s\nWHALESHELL_AGENT_RUN_MODE=%s\n", harness, mode)
-		if err := os.WriteFile(filepath.Join(payloadDir, "runtime.env"), []byte(envSnippet), 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(payloadDir, "runtime.env"), []byte(envSnippet), 0o600); err != nil {
 			return Staged{}, err
 		}
 	}
@@ -254,11 +254,11 @@ func Stage(opt Options) (Staged, error) {
 			if err != nil {
 				return Staged{}, err
 			}
-			if err := os.WriteFile(dst, b, 0o644); err != nil {
+			if err := os.WriteFile(dst, b, 0o600); err != nil {
 				return Staged{}, err
 			}
 		} else {
-			if err := copyFile(st.CLIConfigHost, dst, 0o644); err != nil {
+			if err := copyFile(st.CLIConfigHost, dst, 0o600); err != nil {
 				return Staged{}, fmt.Errorf("cursor cli-config: %w", err)
 			}
 		}

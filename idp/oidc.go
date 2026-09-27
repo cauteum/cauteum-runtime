@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"strings"
@@ -79,12 +80,16 @@ func (o *OIDC) Validate(ctx context.Context, token string) (Claims, error) {
 	var hdr struct {
 		Kid string `json:"kid"`
 		Alg string `json:"alg"`
+		Typ string `json:"typ"`
 	}
 	if err := json.Unmarshal(hdrJSON, &hdr); err != nil {
 		return Claims{}, fmt.Errorf("oidc: header json: %w", err)
 	}
 	if hdr.Alg != "RS256" {
 		return Claims{}, fmt.Errorf("oidc: unsupported alg %q (want RS256)", hdr.Alg)
+	}
+	if hdr.Typ != "" && hdr.Typ != "JWT" {
+		return Claims{}, fmt.Errorf("oidc: unsupported typ %q (want JWT)", hdr.Typ)
 	}
 	o.mu.Lock()
 	pub := o.keys[hdr.Kid]
@@ -125,13 +130,41 @@ func (o *OIDC) Validate(ctx context.Context, token string) (Claims, error) {
 		if !audienceOK(claims["aud"], o.cfg.Audience) {
 			return Claims{}, fmt.Errorf("oidc: audience mismatch")
 		}
+	} else if _, supplied := claims["aud"]; supplied {
+		slog.Warn("oidc audience not configured; token audience is unchecked")
 	}
-	if exp, ok := numericTime(claims["exp"]); ok && time.Now().After(exp) {
-		return Claims{}, fmt.Errorf("oidc: token expired")
+	if err := validateTokenTimes(claims, time.Now()); err != nil {
+		return Claims{}, err
 	}
 	sub, _ := claims["sub"].(string)
 	email, _ := claims["email"].(string)
 	return Claims{Subject: sub, Issuer: iss, Email: email, Raw: claims}, nil
+}
+
+const tokenClockLeeway = 90 * time.Second
+
+func validateTokenTimes(claims map[string]any, now time.Time) error {
+	for _, field := range []string{"exp", "nbf", "iat"} {
+		value, exists := claims[field]
+		if !exists {
+			continue
+		}
+		instant, ok := numericTime(value)
+		if !ok {
+			return fmt.Errorf("oidc: invalid %s claim", field)
+		}
+		switch field {
+		case "exp":
+			if now.After(instant.Add(tokenClockLeeway)) {
+				return fmt.Errorf("oidc: token expired")
+			}
+		case "nbf", "iat":
+			if now.Add(tokenClockLeeway).Before(instant) {
+				return fmt.Errorf("oidc: token %s is in the future", field)
+			}
+		}
+	}
+	return nil
 }
 
 func (o *OIDC) ensureKeys(ctx context.Context) error {

@@ -66,7 +66,6 @@ func Apply(ctx context.Context, opts Options) (Result, error) {
 	abi, err := landlockABI()
 	res.LandlockABI = abi
 	verbose := os.Getenv("WHALESHELL_HARDEN_VERBOSE") == "1"
-	quietBestEffort := !verbose && opts.Mode == ModeBestEffort
 	if err != nil {
 		res.LandlockError = err.Error()
 		msg := fmt.Sprintf("whaleshell-init: landlock unavailable: %v", err)
@@ -74,9 +73,7 @@ func Apply(ctx context.Context, opts Options) (Result, error) {
 			fmt.Fprintln(opts.Log, msg+" (mode=required → fail)")
 			return res, fmt.Errorf("harden: landlock required: %w", err)
 		}
-		if !quietBestEffort {
-			fmt.Fprintln(opts.Log, msg+" (mode=best_effort → continue LOUD)")
-		}
+		fmt.Fprintln(opts.Log, msg+" (mode=best_effort → continue)")
 	} else {
 		if err := applyLandlock(opts.Doc); err != nil {
 			res.LandlockError = err.Error()
@@ -85,9 +82,7 @@ func Apply(ctx context.Context, opts Options) (Result, error) {
 				fmt.Fprintln(opts.Log, msg+" (mode=required → fail)")
 				return res, fmt.Errorf("harden: landlock: %w", err)
 			}
-			if !quietBestEffort {
-				fmt.Fprintln(opts.Log, msg+" (mode=best_effort → continue LOUD)")
-			}
+			fmt.Fprintln(opts.Log, msg+" (mode=best_effort → continue)")
 		} else {
 			res.LandlockApplied = true
 			if verbose {
@@ -104,9 +99,7 @@ func Apply(ctx context.Context, opts Options) (Result, error) {
 				fmt.Fprintln(opts.Log, msg+" (mode=required → fail)")
 				return res, fmt.Errorf("harden: drop: %w", err)
 			}
-			if !quietBestEffort {
-				fmt.Fprintln(opts.Log, msg+" (mode=best_effort → continue LOUD)")
-			}
+			fmt.Fprintln(opts.Log, msg+" (mode=best_effort → continue)")
 		} else {
 			res.DropApplied = true
 			if verbose {
