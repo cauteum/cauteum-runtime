@@ -82,7 +82,7 @@ func TestResolveOCIImageUserIgnoresExplicitPolicyComponent(t *testing.T) {
 
 func TestResolveOCIImageUserRejectsMalformedSelectedComponents(t *testing.T) {
 	for _, raw := range []string{"bad user:1235", "1234:bad group"} {
-		needUser, needGroup := true, true
+		needUser, needGroup := false, false
 		if strings.HasPrefix(raw, "bad user") {
 			needUser = true
 			needGroup = false

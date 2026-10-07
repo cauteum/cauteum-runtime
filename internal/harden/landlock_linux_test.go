@@ -30,7 +30,7 @@ func TestLandlockDefaultRuntimeBaseline(t *testing.T) {
 		t.Skipf("Landlock unavailable in test environment: %v", err)
 	}
 	cmd := exec.Command(os.Args[0], "-test.run=^TestLandlockDefaultRuntimeBaseline$")
-	cmd.Env = append(os.Environ(), childEnv+"=1")
+	cmd.Env = landlockChildEnv(childEnv + "=1")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("default runtime baseline child failed: %v\n%s", err, strings.TrimSpace(string(output)))
 	}
@@ -64,7 +64,7 @@ func TestLandlockExplicitPolicyEnforcement(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmd := exec.Command(os.Args[0], "-test.run=^TestLandlockExplicitPolicyEnforcement$")
-	cmd.Env = append(os.Environ(), childEnv+"=1", "WHALESHELL_LANDLOCK_TEST_ALLOWED="+allowed)
+	cmd.Env = landlockChildEnv(childEnv+"=1", "WHALESHELL_LANDLOCK_TEST_ALLOWED="+allowed)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Landlock child failed: %v\n%s", err, output)
 	}
@@ -116,12 +116,22 @@ func TestLandlockFilesystemWriteGrantsEnforcement(t *testing.T) {
 				}
 			}
 			cmd := exec.Command(os.Args[0], "-test.run=^TestLandlockFilesystemWriteGrantsEnforcement$")
-			cmd.Env = append(os.Environ(), childEnv+"=1", "WHALESHELL_LANDLOCK_WRITE_TEST_MODE="+mode, "WHALESHELL_LANDLOCK_WRITE_TEST_ROOT="+root)
+			cmd.Env = landlockChildEnv(childEnv+"=1", "WHALESHELL_LANDLOCK_WRITE_TEST_MODE="+mode, "WHALESHELL_LANDLOCK_WRITE_TEST_ROOT="+root)
 			if output, err := cmd.CombinedOutput(); err != nil {
 				t.Fatalf("Landlock %s child failed: %v\n%s", mode, err, output)
 			}
 		})
 	}
+}
+
+func landlockChildEnv(values ...string) []string {
+	env := make([]string, 0, len(os.Environ())+len(values))
+	for _, value := range os.Environ() {
+		if !strings.HasPrefix(value, "GOCOVERDIR=") {
+			env = append(env, value)
+		}
+	}
+	return append(env, values...)
 }
 
 func TestLandlockOpenShellDefaultGrantsOnlyWorkdir(t *testing.T) {

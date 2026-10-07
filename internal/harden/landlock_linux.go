@@ -38,6 +38,9 @@ func applyLandlock(doc policy.Document) error {
 		// baseline, an otherwise empty policy causes execve(2) to fail with
 		// EACCES (notably inside nested Docker/Podman).
 		reads = append(reads, "/bin", "/sbin", "/usr", "/lib", "/lib64", "/etc", "/proc")
+		// Container entrypoints and ordinary tools expect /dev/null to remain
+		// writable after the baseline is installed.
+		writes = append(writes, "/dev/null")
 		// /tmp is the image's conventional scratch area and is required by the
 		// OpenShell exec contract for commands that exchange temporary state.
 		writes = append(writes, "/tmp")

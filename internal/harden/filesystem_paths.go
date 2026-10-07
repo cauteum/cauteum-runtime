@@ -3,6 +3,7 @@ package harden
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"slices"
 
 	"github.com/whaleshell/whaleshell-core/policy"
@@ -29,10 +30,8 @@ func prepareReadWritePaths(doc policy.Document) error {
 	if doc.FilesystemPolicy == nil {
 		return nil
 	}
-	uid, gid, err := targetFilesystemIDs(doc)
-	if err != nil {
-		return err
-	}
+	uid, gid := 0, 0
+	identityResolved := false
 	for _, p := range doc.FilesystemPolicy.ReadWrite {
 		info, err := os.Lstat(p)
 		if err == nil {
@@ -44,11 +43,20 @@ func prepareReadWritePaths(doc policy.Document) error {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("inspect read_write path %q: %w", p, err)
 		}
+		if runtime.GOOS != "windows" && !identityResolved {
+			uid, gid, err = targetFilesystemIDs(doc)
+			if err != nil {
+				return err
+			}
+			identityResolved = true
+		}
 		if err := os.MkdirAll(p, 0o755); err != nil {
 			return fmt.Errorf("create read_write path %q: %w", p, err)
 		}
-		if err := os.Chown(p, uid, gid); err != nil {
-			return fmt.Errorf("set owner on new read_write path %q: %w", p, err)
+		if runtime.GOOS != "windows" {
+			if err := os.Chown(p, uid, gid); err != nil {
+				return fmt.Errorf("set owner on new read_write path %q: %w", p, err)
+			}
 		}
 	}
 	return nil

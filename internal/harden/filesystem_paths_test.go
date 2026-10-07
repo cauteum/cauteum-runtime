@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strconv"
 	"testing"
 
@@ -11,6 +12,9 @@ import (
 )
 
 func TestPrepareReadWritePathsCreatesAndOwnsMissingDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not support Unix UID/GID ownership")
+	}
 	setWritableTestIdentity(t)
 	path := filepath.Join(t.TempDir(), "created", "writable")
 	doc := policy.Document{FilesystemPolicy: &policy.FilesystemPolicy{ReadWrite: []string{path}}}
@@ -27,6 +31,9 @@ func TestPrepareReadWritePathsCreatesAndOwnsMissingDirectory(t *testing.T) {
 }
 
 func TestPrepareReadWritePathsPreservesExistingDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not support Unix UID/GID ownership")
+	}
 	setWritableTestIdentity(t)
 	path := filepath.Join(t.TempDir(), "existing")
 	if err := os.Mkdir(path, 0o711); err != nil {

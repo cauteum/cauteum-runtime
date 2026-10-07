@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"sync"
-	"syscall"
 	"testing"
 	"time"
 
@@ -79,6 +79,9 @@ func TestParseArgsRequiresSeparatorAndPreservesArgv(t *testing.T) {
 }
 
 func TestRunForwardsTerminationSignal(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("process-group signal forwarding is Unix-specific")
+	}
 	done := make(chan struct {
 		code int
 		err  error
@@ -91,7 +94,7 @@ func TestRunForwardsTerminationSignal(t *testing.T) {
 		}{code, err}
 	}()
 	time.Sleep(100 * time.Millisecond)
-	if err := syscall.Kill(os.Getpid(), syscall.SIGTERM); err != nil {
+	if err := terminateSupervisorProcess(); err != nil {
 		t.Fatal(err)
 	}
 	select {
@@ -105,6 +108,9 @@ func TestRunForwardsTerminationSignal(t *testing.T) {
 }
 
 func TestRunKillsOrphanedWorkloadDescendants(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("orphan process groups are Unix-specific")
+	}
 	pidFile := filepath.Join(t.TempDir(), "child.pid")
 	done := make(chan struct {
 		code int
@@ -133,7 +139,7 @@ func TestRunKillsOrphanedWorkloadDescendants(t *testing.T) {
 	if childPID <= 0 {
 		t.Fatal("workload child did not publish its pid")
 	}
-	if err := syscall.Kill(os.Getpid(), syscall.SIGTERM); err != nil {
+	if err := terminateSupervisorProcess(); err != nil {
 		t.Fatal(err)
 	}
 	select {
@@ -145,8 +151,8 @@ func TestRunKillsOrphanedWorkloadDescendants(t *testing.T) {
 		t.Fatal("Run did not finish after terminating the workload process group")
 	}
 
-	if err := syscall.Kill(childPID, 0); err == nil || err != syscall.ESRCH {
-		t.Fatalf("orphaned workload child pid %d remains (kill(pid, 0)=%v)", childPID, err)
+	if err := checkProcessGone(childPID); err != nil {
+		t.Fatalf("orphaned workload child pid %d remains: %v", childPID, err)
 	}
 }
 
