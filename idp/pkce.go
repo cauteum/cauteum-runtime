@@ -46,10 +46,10 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 		return TokenBundle{}, fmt.Errorf("oidc pkce: client_id required")
 	}
 	if cfg.HTTPClient == nil {
-		cfg.HTTPClient = &http.Client{Timeout: 20 * time.Second}
+		cfg.HTTPClient = &http.Client{Timeout: oauthRequestTimeout}
 	}
 	if cfg.Timeout <= 0 {
-		cfg.Timeout = 3 * time.Minute
+		cfg.Timeout = defaultLoginTimeout
 	}
 	disc, err := Discover(ctx, cfg.Issuer, cfg.HTTPClient)
 	if err != nil {
@@ -76,11 +76,12 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 		return TokenBundle{}, err
 	}
 
-	scopes := "openid"
+	var scopes strings.Builder
+	scopes.WriteString("openid")
 	if s := strings.TrimSpace(cfg.Scopes); s != "" {
-		for _, p := range strings.Fields(s) {
+		for p := range strings.FieldsSeq(s) {
 			if p != "openid" {
-				scopes += " " + p
+				scopes.WriteString(" " + p)
 			}
 		}
 	}
@@ -89,7 +90,7 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 	q.Set("response_type", "code")
 	q.Set("client_id", cfg.ClientID)
 	q.Set("redirect_uri", redirectURI)
-	q.Set("scope", scopes)
+	q.Set("scope", scopes.String())
 	q.Set("state", state)
 	q.Set("code_challenge", challenge)
 	q.Set("code_challenge_method", "S256")
@@ -129,11 +130,11 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 			fmt.Fprint(w, "whaleshell OIDC login ok — you can close this tab")
 			ch <- result{code: code}
 		}),
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: callbackHeaderReadTimeout,
 	}
 	go func() { _ = srv.Serve(ln) }()
 	defer func() {
-		shCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		shCtx, cancel := context.WithTimeout(context.Background(), callbackShutdownTimeout)
 		defer cancel()
 		_ = srv.Shutdown(shCtx)
 	}()
@@ -164,7 +165,7 @@ func RefreshTokens(ctx context.Context, cfg PKCEConfig, refreshToken string) (To
 		return TokenBundle{}, fmt.Errorf("oidc: empty refresh_token")
 	}
 	if cfg.HTTPClient == nil {
-		cfg.HTTPClient = &http.Client{Timeout: 20 * time.Second}
+		cfg.HTTPClient = &http.Client{Timeout: oauthRequestTimeout}
 	}
 	disc, err := Discover(ctx, cfg.Issuer, cfg.HTTPClient)
 	if err != nil {

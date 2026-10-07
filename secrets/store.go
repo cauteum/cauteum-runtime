@@ -51,8 +51,8 @@ func (e EnvStore) Get(_ context.Context, key string) (string, error) {
 	}
 	prefix := key + "="
 	for _, line := range env {
-		if strings.HasPrefix(line, prefix) {
-			return strings.TrimPrefix(line, prefix), nil
+		if after, ok := strings.CutPrefix(line, prefix); ok {
+			return after, nil
 		}
 	}
 	return "", ErrNotFound{Key: key}

@@ -10,7 +10,7 @@ import (
 )
 
 // FromEnv refreshes credentials by reading current host environment values.
-// This is the Docker-MVP path (OpenShell-style re-inject); Vault/OIDC stay on Stub.
+// Vault, OAuth and token-grant refresh strategies are separate compatibility gaps.
 type FromEnv struct{}
 
 // githubEnvKeys can be filled from `gh auth token` when the process env is empty
@@ -80,5 +80,3 @@ func ghAuthToken() (string, error) {
 	}
 	return tok, nil
 }
-
-var _ Refresher = FromEnv{}

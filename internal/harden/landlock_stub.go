@@ -3,15 +3,17 @@
 package harden
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/whaleshell/whaleshell-core/policy"
 )
 
+var errLandlockUnavailable = errors.New("landlock only available on linux")
+
 func landlockABI() (int, error) {
-	return 0, fmt.Errorf("landlock only available on linux")
+	return 0, errLandlockUnavailable
 }
 
 func applyLandlock(_ policy.Document) error {
-	return fmt.Errorf("landlock only available on linux")
+	return errLandlockUnavailable
 }

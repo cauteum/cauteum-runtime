@@ -16,7 +16,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-const usage = `usage: whaleshell-sshd [--socket PATH] [--host-key FILE] [--shell PATH] [--workdir DIR] [--no-init]
+const usage = `usage: whaleshell-sshd [--socket PATH] [--host-key FILE] [--shell PATH] [--workdir DIR]
 
 Serves SSH on a root-only Unix socket (0600, parent 0700). There is no TCP
 listener: clients reach it only through the gateway supervisor relay.
@@ -45,8 +45,6 @@ func Run(args []string) error {
 			cfg.Shell, err = next()
 		case "--workdir":
 			cfg.WorkDir, err = next()
-		case "--no-init":
-			cfg.InitPath = ""
 		case "-h", "--help":
 			fmt.Fprint(os.Stderr, usage)
 			return nil

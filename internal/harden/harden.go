@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/whaleshell/whaleshell-core/policy"
 )
@@ -52,7 +53,7 @@ func ModeFromPolicy(doc policy.Document) Mode {
 }
 
 // Apply runs Landlock + drop privileges according to opts.
-func Apply(ctx context.Context, opts Options) (Result, error) {
+func Apply(_ context.Context, opts Options) (Result, error) {
 	if opts.Log == nil {
 		opts.Log = os.Stderr
 	}
@@ -61,6 +62,34 @@ func Apply(ctx context.Context, opts Options) (Result, error) {
 	}
 	res := Result{
 		SeccompNote: SeccompNote(),
+	}
+	if err := prepareReadWritePaths(opts.Doc); err != nil {
+		return res, fmt.Errorf("harden: prepare filesystem policy: %w", err)
+	}
+	noFS := noFilesystemGrants(opts.Doc)
+	if noFS {
+		if opts.Mode == ModeRequired {
+			return res, fmt.Errorf("harden: landlock.compatibility is hard_requirement but no filesystem paths are configured")
+		}
+	}
+
+	// Resolve and drop identity before Landlock restricts reads from account
+	// files such as /etc/passwd and /etc/group. Writable path preflight above
+	// still runs while the supervisor has the privileges needed to prepare them.
+	if !opts.NoDrop && shouldDrop(opts.Doc) {
+		if err := dropPrivileges(opts.Doc); err != nil {
+			res.DropError = err.Error()
+			msg := fmt.Sprintf("whaleshell-init: privilege drop failed: %v", err)
+			fmt.Fprintln(opts.Log, msg+" (refusing to launch with the wrong process identity)")
+			return res, fmt.Errorf("harden: drop: %w", err)
+		}
+		res.DropApplied = true
+		if os.Getenv("WHALESHELL_HARDEN_VERBOSE") == "1" {
+			fmt.Fprintln(opts.Log, "whaleshell-init: privileges dropped")
+		}
+	}
+	if noFS {
+		return res, nil
 	}
 
 	abi, err := landlockABI()
@@ -91,32 +120,20 @@ func Apply(ctx context.Context, opts Options) (Result, error) {
 		}
 	}
 
-	if !opts.NoDrop && shouldDrop(opts.Doc) {
-		if err := dropPrivileges(); err != nil {
-			res.DropError = err.Error()
-			msg := fmt.Sprintf("whaleshell-init: privilege drop failed: %v", err)
-			if opts.Mode == ModeRequired {
-				fmt.Fprintln(opts.Log, msg+" (mode=required → fail)")
-				return res, fmt.Errorf("harden: drop: %w", err)
-			}
-			fmt.Fprintln(opts.Log, msg+" (mode=best_effort → continue)")
-		} else {
-			res.DropApplied = true
-			if verbose {
-				fmt.Fprintln(opts.Log, "whaleshell-init: privileges dropped")
-			}
-		}
-	}
-
-	_ = ctx
 	return res, nil
 }
 
-func shouldDrop(doc policy.Document) bool {
-	if os.Getenv("WHALESHELL_DROP") == "1" {
-		return true
+func noFilesystemGrants(doc policy.Document) bool {
+	fs := doc.FilesystemPolicy
+	if fs == nil || fs.IncludeWorkdirEnabled() || len(fs.ReadOnly) != 0 || len(fs.ReadWrite) != 0 {
+		return false
 	}
-	return doc.ProcessUser() != "" || doc.ProcessGroup() != ""
+	return doc.Display == nil || !strings.EqualFold(doc.Display.Mode, "novnc")
+}
+
+func shouldDrop(doc policy.Document) bool {
+	return doc.ProcessUser() != "" || doc.ProcessGroup() != "" ||
+		os.Getenv("OPENSHELL_SANDBOX_UID") != "" || os.Getenv("OPENSHELL_SANDBOX_GID") != "" || runningAsRoot()
 }
 
 // Probe reports Landlock ABI without applying a full policy.

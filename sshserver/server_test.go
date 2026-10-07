@@ -19,6 +19,12 @@ import (
 
 func startServer(t *testing.T, cfg Config) (*ssh.Client, string) {
 	t.Helper()
+	if cfg.InitPath == "" {
+		cfg.InitPath = filepath.Join(t.TempDir(), "whaleshell-init")
+		if err := os.WriteFile(cfg.InitPath, []byte("#!/bin/sh\n[ \"$1\" = \"--\" ] || exit 99\nshift\nexec \"$@\"\n"), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
 	if cfg.Shell == "" {
 		cfg.Shell = "/bin/sh"
 	}
@@ -294,17 +300,46 @@ func TestChildrenWrappedByInit(t *testing.T) {
 }
 
 func TestChildArgv(t *testing.T) {
-	srv := &Server{cfg: Config{Shell: "/bin/bash"}}
+	initPath := filepath.Join(t.TempDir(), "whaleshell-init")
+	if err := os.WriteFile(initPath, []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	srv := &Server{cfg: Config{Shell: "/bin/bash", InitPath: initPath}}
 	ss := &session{srv: srv}
-	if got := strings.Join(ss.childArgv(""), " "); got != "/bin/bash -l" {
+	argv, err := ss.childArgv("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(argv, " "); got != initPath+" -- /bin/bash -l" {
 		t.Fatalf("shell argv = %q", got)
 	}
-	if got := strings.Join(ss.childArgv("ls"), " "); got != "/bin/bash -lc ls" {
+	argv, err = ss.childArgv("ls")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(argv, " "); got != initPath+" -- /bin/bash -lc ls" {
 		t.Fatalf("exec argv = %q", got)
 	}
 	ss.env = []string{EnvNoLoginShell + "=1"}
-	if got := strings.Join(ss.childArgv("ls"), " "); got != "/bin/bash -c ls" {
+	argv, err = ss.childArgv("ls")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(argv, " "); got != initPath+" -- /bin/bash -c ls" {
 		t.Fatalf("no-login argv = %q", got)
+	}
+	ss.srv.cfg.InitPath = filepath.Join(t.TempDir(), "missing-init")
+	if _, err := ss.childArgv("id"); err == nil {
+		t.Fatal("configured but missing hardening init must fail closed")
+	}
+}
+
+func TestNewRequiresExecutableHardeningInit(t *testing.T) {
+	if _, err := New(Config{}); err == nil {
+		t.Fatal("SSH server accepted an empty hardening init path")
+	}
+	if _, err := New(Config{InitPath: filepath.Join(t.TempDir(), "missing-init")}); err == nil {
+		t.Fatal("SSH server accepted a missing hardening init")
 	}
 }
 
