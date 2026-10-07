@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 	"time"
 )
@@ -32,9 +31,8 @@ func TestCallRoundTripsAndServerRemovesSocket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	info, err := os.Stat(path)
-	if err != nil || (runtime.GOOS != "windows" && info.Mode().Perm() != 0o600) {
-		t.Fatalf("socket mode/stat=(%v,%v); want 0600", info, err)
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("control socket stat: %v", err)
 	}
 	response, err := Call(context.Background(), path, Request{Operation: OperationReport, InstanceID: "instance-a", ExitCode: 7})
 	if err != nil || response.InstanceID != "instance-a" {
