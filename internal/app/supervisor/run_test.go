@@ -114,6 +114,9 @@ func TestRunKillsOrphanedWorkloadDescendants(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("orphan process groups are Unix-specific")
 	}
+	if runtime.GOOS == "linux" {
+		enableTestSubreaper(t)
+	}
 	pidFile := filepath.Join(t.TempDir(), "child.pid")
 	done := make(chan struct {
 		code int
