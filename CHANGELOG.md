@@ -1,6 +1,18 @@
 # Changelog
 
-## [Unreleased]
+## [v0.1.0-beta.1] - 2026-10-07
+
+### Added
+
+- Add contextual structured logs for relay channel and SSH session lifecycle events.
+
+### Changed
+
+- Use `whaleshell-core` v0.1.0-beta.1 for relay errors with operation context.
+
+### Fixed
+
+- Isolate Unix-only filesystem ownership and supervisor tests from other platforms.
 
 ## [v0.1.0-alpha.2] - 2026-10-07
 

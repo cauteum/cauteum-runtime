@@ -31,8 +31,8 @@ github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWD
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 github.com/whaleshell/slogx v0.1.0-alpha.2 h1:23j+6y9uP4ycf8Hf26SCaXwvYANXDNMPIt+4oJWNlLs=
 github.com/whaleshell/slogx v0.1.0-alpha.2/go.mod h1:fGG53lX/w0fWs/Uu+ucKA3GoAO/qoHe8L+gIYSU8azY=
-github.com/whaleshell/whaleshell-core v0.1.0-alpha.2 h1:lXBg9l/pYVznWEyU6t/LJ4/Glf1e5hKUsxBGGJhFK6w=
-github.com/whaleshell/whaleshell-core v0.1.0-alpha.2/go.mod h1:MQx5n7RmvA+sGkwJ2HaPrEdYOmVNDGimx1EpO/tqBww=
+github.com/whaleshell/whaleshell-core v0.1.0-beta.1 h1:cv0jdhUE5flcdczKoYR01g3WFOvYDZKJTUihSnEzipM=
+github.com/whaleshell/whaleshell-core v0.1.0-beta.1/go.mod h1:MQx5n7RmvA+sGkwJ2HaPrEdYOmVNDGimx1EpO/tqBww=
 github.com/whaleshell/whaleshell-driver v0.1.0-alpha.2 h1:wr+mBqC1aWcj0RqeWIctTMWGpopd62H39nSw15kYkKE=
 github.com/whaleshell/whaleshell-driver v0.1.0-alpha.2/go.mod h1:4RcBinLOXrMFgpeivkAeaQ/k0qexQAiKGi5ZXgY6C2g=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
