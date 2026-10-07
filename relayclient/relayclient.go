@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/whaleshell/slogx"
 	"github.com/whaleshell/whaleshell-core/relayproto"
 )
 
@@ -172,7 +173,7 @@ func Run(ctx context.Context, cfg Config) error {
 		}
 		attrs := []any{slog.String("op", "supervisor.reconnect"), slog.String("sandbox", cfg.Sandbox), slog.Duration("backoff", backoff)}
 		if err != nil {
-			attrs = append(attrs, slog.String("error", err.Error()))
+			attrs = append(attrs, slogx.Err(err))
 		}
 		var se *relayproto.StatusError
 		if errors.As(err, &se) && (se.Code == http.StatusUnauthorized || se.Code == http.StatusForbidden) {
@@ -238,21 +239,33 @@ func session(ctx context.Context, cfg Config) error {
 }
 
 func openChannel(ctx context.Context, cfg Config, m relayproto.Message) {
-	log := cfg.Log.With(slog.String("sandbox", cfg.Sandbox), slog.String("channel", m.Channel))
+	log := cfg.Log.With(
+		slog.String("op", "supervisor.open"),
+		slog.String("sandbox", cfg.Sandbox),
+		slog.String("channel", m.Channel),
+		slog.String("target", m.Target),
+	)
+	log.Debug("dialing relay target")
 	dctx, cancel := context.WithTimeout(ctx, relayDialTimeout)
 	defer cancel()
 	target, err := cfg.DialTarget(dctx, m.Target)
 	if err != nil {
-		log.Warn("relay target dial failed", slog.String("op", "supervisor.open"), slog.String("target", m.Target), slog.String("error", err.Error()))
+		log.Warn("relay target dial failed", slogx.Err(err))
 		return
 	}
 	data, err := relayproto.Dial(dctx, cfg.GatewayURL, relayproto.PathSupervisorRelay+url.PathEscape(m.Channel),
 		relayproto.DialOptions{Header: cfg.header(), TLSConfig: cfg.TLSConfig})
 	if err != nil {
-		_ = target.Close()
-		log.Warn("relay data stream failed", slog.String("op", "supervisor.open"), slog.String("error", err.Error()))
+		if closeErr := target.Close(); closeErr != nil {
+			log.Debug("relay target close after dial failure failed", slogx.Err(closeErr))
+		}
+		log.Warn("relay data stream failed", slogx.Err(err))
 		return
 	}
-	log.Debug("relay channel open", slog.String("op", "supervisor.open"), slog.String("target", m.Target))
-	relayproto.Pipe(data, target)
+	log.Info("relay channel opened")
+	if err := relayproto.Pipe(data, target); err != nil {
+		log.Warn("relay channel ended with error", slogx.Err(err))
+		return
+	}
+	log.Debug("relay channel closed")
 }

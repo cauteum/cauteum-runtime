@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/whaleshell/slogx"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -159,7 +160,7 @@ func (s *Server) ServeConn(c net.Conn) {
 	_ = c.SetDeadline(time.Now().Add(handshakeTimeout))
 	conn, chans, reqs, err := ssh.NewServerConn(c, s.sshCfg)
 	if err != nil {
-		s.log.Debug("ssh handshake failed", slog.String("op", "sshd.handshake"), slog.String("error", err.Error()))
+		s.log.Debug("ssh handshake failed", slog.String("op", "sshd.handshake"), slogx.Err(err))
 		return
 	}
 	_ = c.SetDeadline(time.Time{})
@@ -428,13 +429,13 @@ func (ss *session) start(r *ssh.Request, command string) {
 	ss.mu.Unlock()
 	argv, err := ss.childArgv(command)
 	if err != nil {
-		ss.srv.log.Error("ssh child hardening unavailable", slog.String("op", "sshd.exec"), slog.String("error", err.Error()))
+		ss.srv.log.Error("ssh child hardening unavailable", slog.String("op", "sshd.exec"), slogx.Err(err))
 		ss.reply(r, false)
 		return
 	}
 	p, err := startProcess(argv, ss.childEnv(), ss.srv.cfg.WorkDir, ss.pty, ss.ch)
 	if err != nil {
-		ss.srv.log.Error("ssh child start failed", slog.String("op", "sshd.exec"), slog.String("error", err.Error()))
+		ss.srv.log.Error("ssh child start failed", slog.String("op", "sshd.exec"), slogx.Err(err))
 		ss.reply(r, false)
 		return
 	}

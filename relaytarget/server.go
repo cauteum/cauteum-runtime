@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/url"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/whaleshell/slogx"
 	"github.com/whaleshell/whaleshell-core/relayproto"
 )
 
@@ -30,6 +32,7 @@ type Server struct {
 	once     sync.Once
 	mu       sync.Mutex
 	conns    map[net.Conn]struct{}
+	log      *slog.Logger
 }
 
 // Listen binds a private Unix socket and begins serving validated loopback
@@ -69,7 +72,9 @@ func Listen(socketPath string) (*Server, error) {
 		_ = os.Remove(socketPath)
 		return nil, fmt.Errorf("relaytarget: secure socket: %w", err)
 	}
-	s := &Server{listener: listener, done: make(chan struct{}), conns: make(map[net.Conn]struct{})}
+	log := slog.Default().With(slog.String("component", "relaytarget"), slog.String("op", "relaytarget.listen"))
+	s := &Server{listener: listener, done: make(chan struct{}), conns: make(map[net.Conn]struct{}), log: log}
+	log.Info("relay target listener started", slog.String("socket", socketPath))
 	s.wg.Add(1)
 	go s.accept()
 	return s, nil
@@ -89,6 +94,7 @@ func (s *Server) accept() {
 				time.Sleep(10 * time.Millisecond)
 				continue
 			}
+			s.log.Error("relay target accept failed", slogx.Err(err))
 			return
 		}
 		s.wg.Add(1)
@@ -112,11 +118,13 @@ func (s *Server) serve(local net.Conn) {
 	_ = local.SetReadDeadline(time.Now().Add(5 * time.Second))
 	line, err := bufio.NewReaderSize(local, maxTargetLine).ReadSlice('\n')
 	if err != nil || len(line) > maxTargetLine {
+		s.log.Debug("relay target request rejected", slog.String("reason", "invalid request"))
 		_, _ = io.WriteString(local, "ERR invalid target\n")
 		return
 	}
 	target, err := validateTarget(strings.TrimSuffix(string(line), "\n"))
 	if err != nil {
+		s.log.Debug("relay target request rejected", slog.String("reason", "target is not allowed"))
 		_, _ = io.WriteString(local, "ERR invalid target\n")
 		return
 	}
@@ -124,15 +132,20 @@ func (s *Server) serve(local net.Conn) {
 	defer cancel()
 	remote, err := (&net.Dialer{}).DialContext(dialCtx, "tcp", target)
 	if err != nil {
+		s.log.Warn("sandbox relay target dial failed", slog.String("target", target), slogx.Err(err))
 		_, _ = io.WriteString(local, "ERR target unavailable\n")
 		return
 	}
 	defer remote.Close()
 	if _, err := io.WriteString(local, "OK\n"); err != nil {
+		s.log.Debug("relay target client disconnected before ready", slogx.Err(err))
 		return
 	}
 	_ = local.SetDeadline(time.Time{})
-	relayproto.Pipe(local, remote)
+	s.log.Debug("relay target connected", slog.String("target", target))
+	if err := relayproto.Pipe(local, remote); err != nil {
+		s.log.Warn("relay target stream ended with error", slog.String("target", target), slogx.Err(err))
+	}
 }
 
 func validateTarget(target string) (string, error) {

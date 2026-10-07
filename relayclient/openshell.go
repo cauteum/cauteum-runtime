@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/url"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	openshellv1 "github.com/NVIDIA/OpenShell/sdk/go/proto/openshellv1"
+	"github.com/whaleshell/slogx"
 	"github.com/whaleshell/whaleshell-core/relayproto"
 	"github.com/whaleshell/whaleshell-runtime/supervisorcontrol"
 	"google.golang.org/grpc"
@@ -82,7 +84,7 @@ func runOpenShell(ctx context.Context, cfg Config) error {
 		if time.Since(started) > 2*relayproto.KeepaliveTimeout {
 			backoff = cfg.MinBackoff
 		}
-		cfg.Log.Warn("OpenShell supervisor session ended", "op", "supervisor.reconnect", "sandbox", cfg.Sandbox, "backoff", backoff, "error", err)
+		cfg.Log.Warn("OpenShell supervisor session ended", slog.String("op", "supervisor.reconnect"), slog.String("sandbox", cfg.Sandbox), slog.Duration("backoff", backoff), slogx.Err(err))
 		select {
 		case <-ctx.Done():
 			return nil
