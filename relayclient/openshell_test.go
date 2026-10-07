@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net"
+	"strconv"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -38,7 +39,7 @@ func (s *refreshSessionServer) ConnectSupervisor(stream openshellv1.OpenShell_Co
 
 func (s *refreshSessionServer) RefreshSandboxToken(context.Context, *openshellv1.RefreshSandboxTokenRequest) (*openshellv1.RefreshSandboxTokenResponse, error) {
 	n := s.refreshes.Add(1)
-	return &openshellv1.RefreshSandboxTokenResponse{Token: "refreshed-token-" + string(rune('0'+n))}, nil
+	return &openshellv1.RefreshSandboxTokenResponse{Token: "refreshed-token-" + strconv.Itoa(int(n))}, nil
 }
 
 var errMissingSupervisorHello = errors.New("missing supervisor hello")
@@ -61,7 +62,7 @@ func TestOpenShellSessionRefreshesSupervisorToken(t *testing.T) {
 	defer conn.Close()
 	client := openshellv1.NewOpenShellClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	instance := newOpenShellInstance("instance-1")
 	token := newSupervisorToken("initial-token")

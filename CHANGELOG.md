@@ -10,6 +10,10 @@
 - Add OpenShell relay targets and policy-status reporting for gateway-backed sandboxes.
 - Validate OCI process identity and apply filesystem hardening with explicit best-effort diagnostics.
 
+### Compatibility
+
+- Unix guests provide process-group signal forwarding, adopted-child reaping, and sidecar lifecycle reporting. Windows builds retain a command-launch fallback without those Unix lifecycle features.
+
 ### Changed
 
 - Replace shell-based agent entrypoints with the Go supervisor and staged harness files.

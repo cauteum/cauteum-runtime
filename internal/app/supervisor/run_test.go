@@ -17,6 +17,9 @@ import (
 )
 
 func TestRunReportsAndFinalizesNaturalMainProcessExit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows supervisor fallback does not report Unix sidecar lifecycle events")
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	dir, err := os.MkdirTemp(os.TempDir(), "sc-")
