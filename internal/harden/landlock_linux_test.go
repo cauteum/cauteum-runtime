@@ -40,8 +40,10 @@ func TestLandlockExplicitPolicyEnforcement(t *testing.T) {
 	const childEnv = "WHALESHELL_LANDLOCK_TEST_CHILD"
 	if os.Getenv(childEnv) == "1" {
 		allowed := os.Getenv("WHALESHELL_LANDLOCK_TEST_ALLOWED")
+		coverageDir := os.Getenv("WHALESHELL_LANDLOCK_TEST_COVERAGE_DIR")
 		doc := policy.Document{FilesystemPolicy: &policy.FilesystemPolicy{
 			ReadOnly:          []string{filepath.Dir(allowed)},
+			ReadWrite:         []string{coverageDir},
 			IncludeWorkdir:    false,
 			IncludeWorkdirSet: true,
 		}}
@@ -64,7 +66,11 @@ func TestLandlockExplicitPolicyEnforcement(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmd := exec.Command(os.Args[0], "-test.run=^TestLandlockExplicitPolicyEnforcement$")
-	cmd.Env = landlockChildEnv(childEnv+"=1", "WHALESHELL_LANDLOCK_TEST_ALLOWED="+allowed)
+	coverageDir := filepath.Join(t.TempDir(), "coverage")
+	if err := os.Mkdir(coverageDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	cmd.Env = landlockChildEnv(coverageDir, childEnv+"=1", "WHALESHELL_LANDLOCK_TEST_ALLOWED="+allowed, "WHALESHELL_LANDLOCK_TEST_COVERAGE_DIR="+coverageDir)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Landlock child failed: %v\n%s", err, output)
 	}
@@ -116,7 +122,7 @@ func TestLandlockFilesystemWriteGrantsEnforcement(t *testing.T) {
 				}
 			}
 			cmd := exec.Command(os.Args[0], "-test.run=^TestLandlockFilesystemWriteGrantsEnforcement$")
-			cmd.Env = landlockChildEnv(childEnv+"=1", "WHALESHELL_LANDLOCK_WRITE_TEST_MODE="+mode, "WHALESHELL_LANDLOCK_WRITE_TEST_ROOT="+root)
+			cmd.Env = landlockChildEnv(filepath.Join(root, "work"), childEnv+"=1", "WHALESHELL_LANDLOCK_WRITE_TEST_MODE="+mode, "WHALESHELL_LANDLOCK_WRITE_TEST_ROOT="+root)
 			if output, err := cmd.CombinedOutput(); err != nil {
 				t.Fatalf("Landlock %s child failed: %v\n%s", mode, err, output)
 			}
@@ -124,14 +130,14 @@ func TestLandlockFilesystemWriteGrantsEnforcement(t *testing.T) {
 	}
 }
 
-func landlockChildEnv(values ...string) []string {
+func landlockChildEnv(coverageDir string, values ...string) []string {
 	env := make([]string, 0, len(os.Environ())+len(values))
 	for _, value := range os.Environ() {
 		if !strings.HasPrefix(value, "GOCOVERDIR=") {
 			env = append(env, value)
 		}
 	}
-	return append(env, values...)
+	return append(env, append([]string{"GOCOVERDIR=" + coverageDir}, values...)...)
 }
 
 func TestLandlockOpenShellDefaultGrantsOnlyWorkdir(t *testing.T) {

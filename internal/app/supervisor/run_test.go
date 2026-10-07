@@ -52,7 +52,7 @@ func TestRunReportsAndFinalizesNaturalMainProcessExit(t *testing.T) {
 	}
 	defer server.Close()
 	t.Setenv("WHALESHELL_SUPERVISOR_CONTROL_SOCKET", path)
-	code, err := Run([]string{"sh", "-c", "exit 7"})
+	code, err := Run(workloadArgs(exitCommand(7)...))
 	if err != nil || code != 7 {
 		t.Fatalf("Run=(%d,%v), want (7,nil)", code, err)
 	}
@@ -157,10 +157,24 @@ func TestRunKillsOrphanedWorkloadDescendants(t *testing.T) {
 }
 
 func TestRunReturnsWorkloadExitCode(t *testing.T) {
-	code, err := Run([]string{"sh", "-c", "exit 17"})
+	code, err := Run(workloadArgs(exitCommand(17)...))
 	if err != nil || code != 17 {
 		t.Fatalf("Run()=(%d,%v), want (17,nil)", code, err)
 	}
+}
+
+func workloadArgs(args ...string) []string {
+	if runtime.GOOS == "windows" {
+		return append([]string{"--"}, args...)
+	}
+	return args
+}
+
+func exitCommand(code int) []string {
+	if runtime.GOOS == "windows" {
+		return []string{"cmd", "/c", fmt.Sprintf("exit /b %d", code)}
+	}
+	return []string{"sh", "-c", fmt.Sprintf("exit %d", code)}
 }
 
 func TestRunRejectsEmptyCommand(t *testing.T) {
