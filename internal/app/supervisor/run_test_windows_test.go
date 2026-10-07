@@ -2,10 +2,12 @@
 
 package supervisor
 
-import "testing"
+import "fmt"
 
-func terminateSupervisorProcess() error { return nil }
+func workloadArgs(args ...string) []string {
+	return append([]string{"--"}, args...)
+}
 
-func checkProcessGone(int) error { return nil }
-
-func enableTestSubreaper(*testing.T) {}
+func exitCommand(code int) []string {
+	return []string{"cmd", "/c", fmt.Sprintf("exit /b %d", code)}
+}
