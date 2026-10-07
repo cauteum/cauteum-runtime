@@ -3,19 +3,27 @@ package sandbox
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/whaleshell/whaleshell-core"
 	"github.com/whaleshell/whaleshell-core/policy"
 	"github.com/whaleshell/whaleshell-driver/driver"
-	"github.com/whaleshell/whaleshell-proxy/proxy"
 )
+
+const rollbackTimeout = 30 * time.Second
+
+// policyApplier is the policy operation required by the lifecycle manager.
+type policyApplier interface {
+	Apply(context.Context, policy.Document) error
+}
 
 // Manager owns sandbox lifecycle for one host.
 type Manager struct {
 	Driver driver.ComputeDriver
-	Proxy  proxy.EgressProxy
+	Proxy  policyApplier
 }
 
 // CreateOptions are host-side inputs for a new sandbox.
@@ -50,7 +58,13 @@ func (m *Manager) Create(ctx context.Context, opt CreateOptions) (driver.Handle,
 		return driver.Handle{}, err
 	}
 	if err := m.Driver.Start(ctx, h.ID); err != nil {
-		_ = m.Driver.Delete(ctx, h.ID)
+		// Rollback must still run when starting the sandbox cancels the request.
+		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), rollbackTimeout)
+		defer cancel()
+		cleanupErr := m.Driver.Delete(cleanupCtx, h.ID)
+		if cleanupErr != nil {
+			return driver.Handle{}, errors.Join(err, fmt.Errorf("sandbox: rollback create: %w", cleanupErr))
+		}
 		return driver.Handle{}, err
 	}
 	return h, nil
@@ -65,6 +79,7 @@ func (m *Manager) Remove(ctx context.Context, nameOrID string) error {
 	if err != nil {
 		return err
 	}
+	// Delete remains authoritative: Stop can fail for an already stopped sandbox.
 	_ = m.Driver.Stop(ctx, info.ID)
 	return m.Driver.Delete(ctx, info.ID)
 }

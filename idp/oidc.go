@@ -2,7 +2,13 @@ package idp
 
 import (
 	"context"
+	"crypto"
+	"crypto/ecdh"
+	"crypto/ed25519"
 	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -25,11 +31,11 @@ type OIDCConfig struct {
 	JWKSCacheTTL      time.Duration
 }
 
-// OIDC is an Adapter that validates Bearer JWTs via issuer JWKS.
+// OIDC validates Bearer JWTs via issuer JWKS.
 type OIDC struct {
 	cfg     OIDCConfig
 	mu      sync.Mutex
-	keys    map[string]*rsa.PublicKey
+	keys    map[string]jwkSigningKey
 	fetched time.Time
 	jwksURI string
 }
@@ -44,21 +50,16 @@ func NewOIDC(cfg OIDCConfig) (*OIDC, error) {
 		return nil, err
 	}
 	if cfg.HTTPClient == nil {
-		cfg.HTTPClient = &http.Client{Timeout: 15 * time.Second}
+		cfg.HTTPClient = &http.Client{Timeout: oidcRequestTimeout}
 	}
 	if cfg.JWKSCacheTTL <= 0 {
-		cfg.JWKSCacheTTL = 10 * time.Minute
+		cfg.JWKSCacheTTL = defaultJWKSCacheTTL
 	}
-	return &OIDC{cfg: cfg, keys: map[string]*rsa.PublicKey{}}, nil
+	return &OIDC{cfg: cfg, keys: map[string]jwkSigningKey{}}, nil
 }
 
 // Issuer returns the configured issuer.
 func (o *OIDC) Issuer() string { return o.cfg.Issuer }
-
-// Token is not used for gateway validation adapters.
-func (o *OIDC) Token(context.Context) (string, error) {
-	return "", fmt.Errorf("%w: use CLI PKCE login", ErrNotImplemented)
-}
 
 // Validate verifies a JWT access/id token against JWKS.
 func (o *OIDC) Validate(ctx context.Context, token string) (Claims, error) {
@@ -85,21 +86,16 @@ func (o *OIDC) Validate(ctx context.Context, token string) (Claims, error) {
 	if err := json.Unmarshal(hdrJSON, &hdr); err != nil {
 		return Claims{}, fmt.Errorf("oidc: header json: %w", err)
 	}
-	if hdr.Alg != "RS256" {
-		return Claims{}, fmt.Errorf("oidc: unsupported alg %q (want RS256)", hdr.Alg)
+	if !supportedJWTAlgorithm(hdr.Alg) {
+		return Claims{}, fmt.Errorf("oidc: unsupported alg %q", hdr.Alg)
 	}
 	if hdr.Typ != "" && hdr.Typ != "JWT" {
 		return Claims{}, fmt.Errorf("oidc: unsupported typ %q (want JWT)", hdr.Typ)
 	}
 	o.mu.Lock()
-	pub := o.keys[hdr.Kid]
-	if pub == nil && len(o.keys) == 1 {
-		for _, k := range o.keys {
-			pub = k
-		}
-	}
+	key, found := o.keys[hdr.Kid]
 	o.mu.Unlock()
-	if pub == nil {
+	if !found {
 		// force refresh once for unknown kid
 		o.mu.Lock()
 		o.fetched = time.Time{}
@@ -108,13 +104,16 @@ func (o *OIDC) Validate(ctx context.Context, token string) (Claims, error) {
 			return Claims{}, err
 		}
 		o.mu.Lock()
-		pub = o.keys[hdr.Kid]
+		key, found = o.keys[hdr.Kid]
 		o.mu.Unlock()
-		if pub == nil {
+		if !found {
 			return Claims{}, fmt.Errorf("oidc: unknown kid %q", hdr.Kid)
 		}
 	}
-	payload, err := verifyRS256(parts[0]+"."+parts[1], parts[2], pub)
+	if hdr.Alg != key.Algorithm {
+		return Claims{}, fmt.Errorf("oidc: token algorithm does not match signing key")
+	}
+	payload, err := verifyJWTSignature(parts[0]+"."+parts[1], parts[2], key)
 	if err != nil {
 		return Claims{}, err
 	}
@@ -125,6 +124,12 @@ func (o *OIDC) Validate(ctx context.Context, token string) (Claims, error) {
 	iss, _ := claims["iss"].(string)
 	if strings.TrimRight(iss, "/") != o.cfg.Issuer {
 		return Claims{}, fmt.Errorf("oidc: issuer mismatch")
+	}
+	if _, present := claims["exp"]; !present {
+		return Claims{}, fmt.Errorf("oidc: exp claim required")
+	}
+	if sub, _ := claims["sub"].(string); strings.TrimSpace(sub) == "" {
+		return Claims{}, fmt.Errorf("oidc: sub claim required")
 	}
 	if o.cfg.Audience != "" {
 		if !audienceOK(claims["aud"], o.cfg.Audience) {
@@ -204,23 +209,29 @@ func (o *OIDC) ensureKeys(ctx context.Context) error {
 	if err := json.Unmarshal(body, &doc); err != nil {
 		return fmt.Errorf("oidc jwks parse: %w", err)
 	}
-	keys := map[string]*rsa.PublicKey{}
+	keys := map[string]jwkSigningKey{}
+	poisoned := map[string]bool{}
 	for _, k := range doc.Keys {
-		if k.Kty != "RSA" || k.N == "" || k.E == "" {
-			continue
-		}
-		pub, err := jwkToRSA(k)
+		key, err := jwkToSigningKey(k)
 		if err != nil {
 			continue
 		}
 		kid := k.Kid
 		if kid == "" {
-			kid = fmt.Sprintf("key-%d", len(keys))
+			continue
 		}
-		keys[kid] = pub
+		if poisoned[kid] {
+			continue
+		}
+		if old, exists := keys[kid]; exists && old.Algorithm != key.Algorithm {
+			delete(keys, kid)
+			poisoned[kid] = true
+			continue
+		}
+		keys[kid] = key
 	}
 	if len(keys) == 0 {
-		return fmt.Errorf("oidc jwks: no usable RSA keys")
+		return fmt.Errorf("oidc jwks: no usable signing keys")
 	}
 	o.keys = keys
 	o.fetched = time.Now()
@@ -240,7 +251,7 @@ type Discovery struct {
 func Discover(ctx context.Context, issuer string, client *http.Client) (Discovery, error) {
 	issuer = strings.TrimRight(strings.TrimSpace(issuer), "/")
 	if client == nil {
-		client = &http.Client{Timeout: 15 * time.Second}
+		client = &http.Client{Timeout: oidcRequestTimeout}
 	}
 	url := issuer + "/.well-known/openid-configuration"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -270,31 +281,149 @@ func Discover(ctx context.Context, issuer string, client *http.Client) (Discover
 }
 
 type jwk struct {
-	Kty string `json:"kty"`
-	Kid string `json:"kid"`
-	N   string `json:"n"`
-	E   string `json:"e"`
-	Alg string `json:"alg"`
-	Use string `json:"use"`
+	Kty    string   `json:"kty"`
+	Kid    string   `json:"kid"`
+	N      string   `json:"n"`
+	E      string   `json:"e"`
+	Crv    string   `json:"crv"`
+	X      string   `json:"x"`
+	Y      string   `json:"y"`
+	Alg    string   `json:"alg"`
+	Use    string   `json:"use"`
+	KeyOps []string `json:"key_ops"`
 }
 
-func jwkToRSA(k jwk) (*rsa.PublicKey, error) {
-	nb, err := base64.RawURLEncoding.DecodeString(k.N)
-	if err != nil {
-		return nil, err
+type jwkSigningKey struct {
+	Key       crypto.PublicKey
+	Algorithm string
+}
+
+func jwkToSigningKey(k jwk) (jwkSigningKey, error) {
+	if k.Use != "" && k.Use != "sig" {
+		return jwkSigningKey{}, fmt.Errorf("unsupported JWK use")
 	}
-	eb, err := base64.RawURLEncoding.DecodeString(k.E)
-	if err != nil {
-		return nil, err
+	if len(k.KeyOps) > 0 && !containsJWKOperation(k.KeyOps, "verify") {
+		return jwkSigningKey{}, fmt.Errorf("JWK is not permitted for verification")
 	}
-	var eInt int
-	for _, b := range eb {
-		eInt = eInt<<8 + int(b)
+	var key crypto.PublicKey
+	algorithm := k.Alg
+	switch k.Kty {
+	case "RSA":
+		if k.N == "" || k.E == "" {
+			return jwkSigningKey{}, fmt.Errorf("RSA JWK missing components")
+		}
+		nb, err := base64.RawURLEncoding.DecodeString(k.N)
+		if err != nil {
+			return jwkSigningKey{}, err
+		}
+		eb, err := base64.RawURLEncoding.DecodeString(k.E)
+		if err != nil {
+			return jwkSigningKey{}, err
+		}
+		var exponent int
+		for _, b := range eb {
+			exponent = exponent<<8 + int(b)
+		}
+		if exponent < 3 || exponent%2 == 0 {
+			return jwkSigningKey{}, fmt.Errorf("invalid RSA exponent")
+		}
+		key = &rsa.PublicKey{N: new(big.Int).SetBytes(nb), E: exponent}
+		if algorithm == "" {
+			algorithm = "RS256"
+		}
+		if !isRSAJWTAlgorithm(algorithm) {
+			return jwkSigningKey{}, fmt.Errorf("RSA JWK algorithm mismatch")
+		}
+	case "EC":
+		var curve ecdh.Curve
+		var curveOID asn1.ObjectIdentifier
+		switch k.Crv {
+		case "P-256":
+			curve, curveOID, algorithm = ecdh.P256(), asn1.ObjectIdentifier{1, 2, 840, 10045, 3, 1, 7}, defaultIfEmpty(algorithm, "ES256")
+		case "P-384":
+			curve, curveOID, algorithm = ecdh.P384(), asn1.ObjectIdentifier{1, 3, 132, 0, 34}, defaultIfEmpty(algorithm, "ES384")
+		default:
+			return jwkSigningKey{}, fmt.Errorf("unsupported EC curve")
+		}
+		xb, err := base64.RawURLEncoding.DecodeString(k.X)
+		if err != nil {
+			return jwkSigningKey{}, err
+		}
+		yb, err := base64.RawURLEncoding.DecodeString(k.Y)
+		if err != nil {
+			return jwkSigningKey{}, err
+		}
+		point := make([]byte, 1, 1+len(xb)+len(yb))
+		point[0] = 4
+		point = append(point, xb...)
+		point = append(point, yb...)
+		if _, err := curve.NewPublicKey(point); err != nil {
+			return jwkSigningKey{}, fmt.Errorf("EC point is invalid: %w", err)
+		}
+		parameters, err := asn1.Marshal(curveOID)
+		if err != nil {
+			return jwkSigningKey{}, err
+		}
+		info := struct {
+			Algorithm pkix.AlgorithmIdentifier
+			PublicKey asn1.BitString
+		}{pkix.AlgorithmIdentifier{Algorithm: asn1.ObjectIdentifier{1, 2, 840, 10045, 2, 1}, Parameters: asn1.RawValue{FullBytes: parameters}}, asn1.BitString{Bytes: point, BitLength: len(point) * 8}}
+		der, err := asn1.Marshal(info)
+		if err != nil {
+			return jwkSigningKey{}, err
+		}
+		key, err = x509.ParsePKIXPublicKey(der)
+		if err != nil {
+			return jwkSigningKey{}, err
+		}
+	case "OKP":
+		if k.Crv != "Ed25519" {
+			return jwkSigningKey{}, fmt.Errorf("unsupported OKP curve")
+		}
+		xb, err := base64.RawURLEncoding.DecodeString(k.X)
+		if err != nil {
+			return jwkSigningKey{}, err
+		}
+		if len(xb) != ed25519.PublicKeySize {
+			return jwkSigningKey{}, fmt.Errorf("invalid Ed25519 key size")
+		}
+		key = ed25519.PublicKey(xb)
+		algorithm = defaultIfEmpty(algorithm, "EdDSA")
+	default:
+		return jwkSigningKey{}, fmt.Errorf("unsupported JWK key type")
 	}
-	if eInt == 0 {
-		eInt = 65537
+	if k.Alg != "" && k.Alg != algorithm {
+		return jwkSigningKey{}, fmt.Errorf("JWK algorithm does not match key type")
 	}
-	return &rsa.PublicKey{N: new(big.Int).SetBytes(nb), E: eInt}, nil
+	if !supportedJWTAlgorithm(algorithm) {
+		return jwkSigningKey{}, fmt.Errorf("unsupported JWT signing algorithm")
+	}
+	return jwkSigningKey{Key: key, Algorithm: algorithm}, nil
+}
+
+func containsJWKOperation(ops []string, wanted string) bool {
+	for _, op := range ops {
+		if op == wanted {
+			return true
+		}
+	}
+	return false
+}
+func defaultIfEmpty(value, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+	return value
+}
+func isRSAJWTAlgorithm(alg string) bool {
+	switch alg {
+	case "RS256", "RS384", "RS512", "PS256", "PS384", "PS512":
+		return true
+	}
+	return false
+}
+func supportedJWTAlgorithm(alg string) bool {
+	return isRSAJWTAlgorithm(alg) || alg == "ES256" || alg == "ES384" || alg == "EdDSA"
 }
 
 func audienceOK(aud any, want string) bool {
@@ -342,5 +471,3 @@ func validateIssuerURL(issuer string, allowHTTP bool) error {
 	}
 	return fmt.Errorf("oidc: issuer must be https:// (or http:// loopback with AllowInsecureHTTP)")
 }
-
-var _ Adapter = (*OIDC)(nil)

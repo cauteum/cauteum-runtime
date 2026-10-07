@@ -104,5 +104,5 @@ func Run(args []string) error {
 	if err != nil {
 		bin = cmd[0]
 	}
-	return syscall.Exec(bin, cmd, os.Environ())
+	return syscall.Exec(bin, cmd, workloadEnvironment(os.Environ()))
 }

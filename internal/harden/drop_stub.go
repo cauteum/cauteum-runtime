@@ -2,8 +2,12 @@
 
 package harden
 
-import "fmt"
+import "errors"
 
-func dropPrivileges() error {
-	return fmt.Errorf("privilege drop only available on linux")
+import "github.com/whaleshell/whaleshell-core/policy"
+
+var errPrivilegeDropUnavailable = errors.New("privilege drop only available on linux")
+
+func dropPrivileges(_ policy.Document) error {
+	return errPrivilegeDropUnavailable
 }

@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/whaleshell/whaleshell-runtime/actions/workflows/ci.yml"><img src="https://github.com/whaleshell/whaleshell-runtime/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pkg.go.dev/github.com/whaleshell/whaleshell-runtime"><img src="https://pkg.go.dev/badge/github.com/whaleshell/whaleshell-runtime.svg" alt="Go Reference"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
+  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
   <a href="https://github.com/whaleshell/whaleshell-runtime"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 
   <a href="https://github.com/whaleshell/whaleshell-runtime/actions/workflows/images-sandbox.yml"><img src="https://github.com/whaleshell/whaleshell-runtime/actions/workflows/images-sandbox.yml/badge.svg" alt="images-sandbox"></a>
@@ -20,6 +20,8 @@
 
 ## Overview
 
+See the [architecture](https://whaleshell.github.io/concepts/architecture/) and [security](https://whaleshell.github.io/concepts/security/) pages for the sandbox process and its trust boundaries.
+
 **whaleshell-runtime** ties sandbox creation together: guest init (`whaleshell-init`), Landlock/seccomp harden, secrets store, inference snippets, and the Debian-based sandbox image flavors published to GHCR.
 
 ### Key Features
@@ -28,6 +30,8 @@
 |----------|--------------|
 | **Images** | `sandboxes/{base,gui,gpu}` on `ghcr.io/whaleshell/whaleshell` |
 | **Init** | `whaleshell-init` — Landlock, seccomp, workspace mount |
+| **Supervisor** | `whaleshell-supervisor` — PID 1 workload lifecycle and sandbox-side loopback dial socket for `ForwardTcp` |
+| **Relay** | `relaytarget` — validates and dials loopback TCP targets inside the sandbox network namespace over the private shared Unix socket |
 | **Secrets** | Host-side store resolved into guest placeholders |
 | **Harden** | Linux sandbox hardening helpers |
 | **Inference** | Local host-gateway model URL helpers |
@@ -36,9 +40,7 @@
 
 ## Installation
 
-```bash
-go get github.com/whaleshell/whaleshell-runtime@latest
-```
+Build from this checkout in the sibling `go.work` workspace. The published alpha tag still declares an older module path, so a standalone `go get` needs a new coordinated release.
 
 **Images (after CI publish):**
 
@@ -49,6 +51,8 @@ ghcr.io/whaleshell/whaleshell/sandboxes/gpu:latest
 ```
 
 **Requirements:** Go 1.27+
+
+Sandbox images declare `USER sandbox` and give that account writable ownership of `/sandbox`, `/workspace`, and `/whaleshell/data`. Docker/Podman start the hardened supervisor as root while passing the inspected image's OCI `Config.User` to the workload identity resolver; explicit OpenShell policy fields take precedence. Custom images that omit OCI `USER` must specify both process identity fields in policy or use a backend that provides resolved `OPENSHELL_SANDBOX_UID` / `OPENSHELL_SANDBOX_GID` values.
 
 ---
 
@@ -74,7 +78,7 @@ docker build -t whaleshell-sandbox:local --target cli -f images/sandbox/Dockerfi
 | `secrets/` | Secret store |
 | `images/sandbox/` | Multi-target Dockerfile |
 | `inference/` | Local model policy snippets |
-| `agentconfig/` | Agent payload helpers |
+| `agentconfig/` | Supervisor policy-advisor and `AGENTS.md` installation |
 
 
 ---
@@ -90,4 +94,4 @@ docker build -t whaleshell-sandbox:local --target cli -f images/sandbox/Dockerfi
 
 ## License
 
-[MIT](./LICENSE) © whaleshell
+[Apache-2.0](./LICENSE) © whaleshell

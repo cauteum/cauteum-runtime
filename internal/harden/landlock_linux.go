@@ -26,28 +26,27 @@ func landlockABI() (int, error) {
 }
 
 func applyLandlock(doc policy.Document) error {
-	reads := []string{"/usr", "/lib", "/lib64", "/bin", "/sbin", "/etc", "/proc", "/dev", "/sys", "/app", "/whaleshell", "/tmp", "/var", "/home", "/run"}
-	writes := []string{"/tmp", "/dev/null", "/dev/zero", "/dev/urandom", "/dev/tty", "/workspace", "/run", "/home", "/var/tmp"}
-	if doc.FilesystemPolicy != nil {
-		if len(doc.FilesystemPolicy.ReadOnly) > 0 {
-			reads = append([]string{}, doc.FilesystemPolicy.ReadOnly...)
-			reads = append(reads, "/proc", "/dev", "/whaleshell", "/tmp")
-		}
-		if len(doc.FilesystemPolicy.ReadWrite) > 0 {
-			writes = append([]string{}, doc.FilesystemPolicy.ReadWrite...)
-		}
-		if doc.FilesystemPolicy.IncludeWorkdir {
-			writes = append(writes, "/workspace")
-		}
+	workdir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("resolve active workspace for filesystem policy: %w", err)
+	}
+	reads, writes := filesystemPaths(doc, workdir)
+	if doc.FilesystemPolicy == nil {
+		// A sandbox must be able to execute the image's normal userland after
+		// Landlock is installed. OpenShell's omitted filesystem_policy does not
+		// make /bin, the dynamic linker, or /etc inaccessible. Without this
+		// baseline, an otherwise empty policy causes execve(2) to fail with
+		// EACCES (notably inside nested Docker/Podman).
+		reads = append(reads, "/bin", "/sbin", "/usr", "/lib", "/lib64", "/etc", "/proc")
+		// /tmp is the image's conventional scratch area and is required by the
+		// OpenShell exec contract for commands that exchange temporary state.
+		writes = append(writes, "/tmp")
 	}
 	if doc.Display != nil && strings.EqualFold(doc.Display.Mode, "novnc") {
 		reads = append(reads, "/tmp/.X11-unix", "/usr/share", "/usr/lib",
 			"/etc/chromium", "/usr/lib/chromium", "/usr/bin/chromium")
 		writes = append(writes, "/tmp/.X11-unix", "/tmp/whaleshell-display", "/home", "/run/user")
 	}
-	// Always allow X11 socket dir when present (gui boot / best_effort).
-	reads = append(reads, "/tmp/.X11-unix")
-	writes = append(writes, "/tmp/.X11-unix", "/tmp/whaleshell-display")
 	reads = unique(reads)
 	writes = unique(writes)
 
@@ -55,27 +54,43 @@ func applyLandlock(doc policy.Document) error {
 	if doc.HardenMode() == "required" {
 		cfg = ll.V5
 	}
-	rules := make([]ll.PathOpt, 0, 2) //nolint:staticcheck // PathOpt kept until landlock major drop of alias
-	if ro := existing(reads); len(ro) > 0 {
-		rules = append(rules, ll.RODirs(ro...))
+	rules := make([]ll.PathOpt, 0, 4) //nolint:staticcheck // PathOpt kept until landlock major drop of alias
+	roDirs, roFiles := existingByType(reads)
+	if len(roDirs) > 0 {
+		rules = append(rules, ll.RODirs(roDirs...))
 	}
-	if rw := existing(writes); len(rw) > 0 {
-		rules = append(rules, ll.RWDirs(rw...))
+	if len(roFiles) > 0 {
+		rules = append(rules, ll.ROFiles(roFiles...))
+	}
+	rwDirs, rwFiles := existingByType(writes)
+	if len(rwDirs) > 0 {
+		rules = append(rules, ll.RWDirs(rwDirs...))
+	}
+	if len(rwFiles) > 0 {
+		rules = append(rules, ll.RWFiles(rwFiles...))
 	}
 	if len(rules) == 0 {
-		return fmt.Errorf("no filesystem paths to allow")
+		if doc.HardenMode() == "required" {
+			return fmt.Errorf("landlock.compatibility is hard_requirement but no filesystem paths are configured")
+		}
+		return nil
 	}
 	return cfg.RestrictPaths(rules...)
 }
 
-func existing(paths []string) []string {
-	out := make([]string, 0, len(paths))
+func existingByType(paths []string) (dirs, files []string) {
 	for _, p := range paths {
-		if _, err := os.Stat(p); err == nil {
-			out = append(out, p)
+		info, err := os.Stat(p)
+		if err != nil {
+			continue
+		}
+		if info.IsDir() {
+			dirs = append(dirs, p)
+		} else {
+			files = append(files, p)
 		}
 	}
-	return out
+	return dirs, files
 }
 
 func unique(in []string) []string {

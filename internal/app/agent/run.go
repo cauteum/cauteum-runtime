@@ -50,14 +50,14 @@ func Run(args []string) error {
 	log.Info("registering with gateway", slog.String("sandbox", name), slog.String("gateway", base))
 
 	// Long-poll style relay: poll for jobs, post results (works without gorilla/websocket).
-	client := &http.Client{Timeout: 65 * time.Second}
+	client := &http.Client{Timeout: requestTimeout}
 	for {
-		pollCtx, pollCancel := context.WithTimeout(ctx, 60*time.Second)
+		pollCtx, pollCancel := context.WithTimeout(ctx, pollTimeout)
 		job, err := pollJob(pollCtx, client, base, name)
 		pollCancel()
 		if err != nil {
 			log.Warn("poll failed", slogx.Err(err))
-			time.Sleep(2 * time.Second)
+			time.Sleep(retryInterval)
 			continue
 		}
 		if job == nil {

@@ -47,8 +47,8 @@ type Config struct {
 	HostKey ssh.Signer
 	// Shell is the login shell (default /bin/bash, then /bin/sh).
 	Shell string
-	// InitPath wraps every child as `InitPath -- <argv>` when the file exists
-	// (whaleshell-init applies Landlock / privilege drop from policy).
+	// InitPath is required and wraps every child as `InitPath -- <argv>`;
+	// whaleshell-init applies Landlock / privilege drop from policy.
 	InitPath string
 	// Env is the base child environment (default os.Environ()).
 	Env []string
@@ -68,6 +68,13 @@ type Server struct {
 
 // New builds a Server.
 func New(cfg Config) (*Server, error) {
+	if strings.TrimSpace(cfg.InitPath) == "" {
+		return nil, fmt.Errorf("ssh server: hardening init path is required")
+	}
+	initInfo, initErr := os.Stat(cfg.InitPath)
+	if initErr != nil || !initInfo.Mode().IsRegular() || initInfo.Mode().Perm()&0o111 == 0 {
+		return nil, fmt.Errorf("ssh server: hardening init is unavailable or not executable")
+	}
 	if cfg.HostKey == nil {
 		_, priv, err := ed25519.GenerateKey(rand.Reader)
 		if err != nil {
@@ -89,7 +96,7 @@ func New(cfg Config) (*Server, error) {
 		cfg.Env = os.Environ()
 	}
 	if cfg.DialLoopback == nil {
-		d := &net.Dialer{Timeout: 10 * time.Second}
+		d := &net.Dialer{Timeout: sessionRequestTimeout}
 		cfg.DialLoopback = d.DialContext
 	}
 	log := cfg.Log
@@ -149,7 +156,7 @@ func (s *Server) Serve(ln net.Listener) error {
 // ServeConn handles one SSH transport.
 func (s *Server) ServeConn(c net.Conn) {
 	defer c.Close()
-	_ = c.SetDeadline(time.Now().Add(30 * time.Second))
+	_ = c.SetDeadline(time.Now().Add(handshakeTimeout))
 	conn, chans, reqs, err := ssh.NewServerConn(c, s.sshCfg)
 	if err != nil {
 		s.log.Debug("ssh handshake failed", slog.String("op", "sshd.handshake"), slog.String("error", err.Error()))
@@ -225,7 +232,7 @@ func (s *Server) handleDirectTCPIP(nc ssh.NewChannel) {
 	if strings.EqualFold(host, "localhost") {
 		host = "127.0.0.1"
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), sessionRequestTimeout)
 	target, err := s.cfg.DialLoopback(ctx, "tcp", net.JoinHostPort(strings.Trim(host, "[]"), fmt.Sprint(p.Port)))
 	cancel()
 	if err != nil {
@@ -371,7 +378,7 @@ func (ss *session) handle(r *ssh.Request) {
 }
 
 // childArgv builds the (optionally init-wrapped) login-shell argv.
-func (ss *session) childArgv(command string) []string {
+func (ss *session) childArgv(command string) ([]string, error) {
 	shell := ss.srv.cfg.Shell
 	var argv []string
 	switch {
@@ -382,12 +389,15 @@ func (ss *session) childArgv(command string) []string {
 	default:
 		argv = []string{shell, "-lc", command}
 	}
-	if ip := ss.srv.cfg.InitPath; ip != "" {
-		if _, err := os.Stat(ip); err == nil {
-			argv = append([]string{ip, "--"}, argv...)
-		}
+	ip := ss.srv.cfg.InitPath
+	info, err := os.Stat(ip)
+	if err != nil {
+		return nil, fmt.Errorf("ssh child hardening init unavailable: %w", err)
 	}
-	return argv
+	if !info.Mode().IsRegular() || info.Mode().Perm()&0o111 == 0 {
+		return nil, fmt.Errorf("ssh child hardening init is not an executable regular file")
+	}
+	return append([]string{ip, "--"}, argv...), nil
 }
 
 func (ss *session) noLogin() bool {
@@ -416,7 +426,12 @@ func (ss *session) start(r *ssh.Request, command string) {
 		return
 	}
 	ss.mu.Unlock()
-	argv := ss.childArgv(command)
+	argv, err := ss.childArgv(command)
+	if err != nil {
+		ss.srv.log.Error("ssh child hardening unavailable", slog.String("op", "sshd.exec"), slog.String("error", err.Error()))
+		ss.reply(r, false)
+		return
+	}
 	p, err := startProcess(argv, ss.childEnv(), ss.srv.cfg.WorkDir, ss.pty, ss.ch)
 	if err != nil {
 		ss.srv.log.Error("ssh child start failed", slog.String("op", "sshd.exec"), slog.String("error", err.Error()))
