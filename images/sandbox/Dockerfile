@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Multi-target sandbox images (Debian bookworm).
-#   docker build --target cli -t whaleshell-sandbox:local .
-#   docker build --target gui -t whaleshell-sandbox:gui .
-#   docker build --target gpu -t whaleshell-sandbox:gpu .
+#   docker build --target cli -t cauteum-sandbox:local .
+#   docker build --target gui -t cauteum-sandbox:gui .
+#   docker build --target gpu -t cauteum-sandbox:gpu .
 #
 # cli  — OpenShell-like base: languages, agents, networking, developer tools
 # gui  — Debian bookworm: Chromium + Xvfb/openbox/noVNC
@@ -13,10 +13,10 @@
 ARG DEBIAN_BASE=debian:bookworm
 
 FROM ${DEBIAN_BASE} AS cli
-LABEL org.opencontainers.image.title="whaleshell-sandbox" \
-      org.opencontainers.image.description="whaleshell agent sandbox (OpenShell-like toolset)" \
+LABEL org.opencontainers.image.title="cauteum-sandbox" \
+      org.opencontainers.image.description="cauteum agent sandbox (OpenShell-like toolset)" \
       org.opencontainers.image.licenses="Apache-2.0" \
-      org.opencontainers.image.source="https://github.com/whaleshell/whaleshell-runtime"
+      org.opencontainers.image.source="https://github.com/cauteum/cauteum-runtime"
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -66,24 +66,24 @@ RUN npm install -g \
 # uv for Python toolchain (optional; system python3 remains available)
 COPY --from=ghcr.io/astral-sh/uv:0.10.8 /uv /usr/local/bin/uv
 
-COPY whaleshell-init /usr/local/bin/whaleshell-init
-RUN chmod 0755 /usr/local/bin/whaleshell-init \
-    && mkdir -p /whaleshell/data/home/.local/bin /whaleshell/data/bin /workspace \
+COPY cauteum-init /usr/local/bin/cauteum-init
+RUN chmod 0755 /usr/local/bin/cauteum-init \
+    && mkdir -p /cauteum/data/home/.local/bin /cauteum/data/bin /workspace \
     && ln -sf /usr/bin/python3 /usr/local/bin/python || true
 RUN groupadd --system sandbox \
     && useradd --system --gid sandbox --home-dir /sandbox --create-home --shell /bin/bash sandbox \
-    && chown -R sandbox:sandbox /whaleshell/data /sandbox /workspace
+    && chown -R sandbox:sandbox /cauteum/data /sandbox /workspace
 
-ENV WHALESHELL_POLICY=/whaleshell/policy.yaml \
-    HOME=/whaleshell/data/home \
-    PATH=/whaleshell/data/home/.local/bin:/whaleshell/data/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV CAUTEUM_POLICY=/cauteum/policy.yaml \
+    HOME=/cauteum/data/home \
+    PATH=/cauteum/data/home/.local/bin:/cauteum/data/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /workspace
 USER sandbox
-ENTRYPOINT ["/usr/local/bin/whaleshell-init"]
+ENTRYPOINT ["/usr/local/bin/cauteum-init"]
 CMD ["--", "sleep", "infinity"]
 
 # GPU-oriented sandbox: toolchain for CUDA samples / torch wheels.
-# Drivers and libcuda.so come from the host via CDI (whaleshell sandbox create --gpu).
+# Drivers and libcuda.so come from the host via CDI (cauteum sandbox create --gpu).
 FROM ${DEBIAN_BASE} AS gpu
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -94,19 +94,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
-COPY whaleshell-init /usr/local/bin/whaleshell-init
-RUN chmod 0755 /usr/local/bin/whaleshell-init \
+COPY cauteum-init /usr/local/bin/cauteum-init
+RUN chmod 0755 /usr/local/bin/cauteum-init \
     && groupadd --system sandbox \
     && useradd --system --gid sandbox --home-dir /sandbox --create-home --shell /bin/sh sandbox \
-    && mkdir -p /whaleshell/data /workspace \
-    && chown -R sandbox:sandbox /whaleshell/data /sandbox /workspace
-ENV WHALESHELL_POLICY=/whaleshell/policy.yaml \
-    HOME=/whaleshell/data/home \
-    PATH=/whaleshell/data/home/.local/bin:/whaleshell/data/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    && mkdir -p /cauteum/data /workspace \
+    && chown -R sandbox:sandbox /cauteum/data /sandbox /workspace
+ENV CAUTEUM_POLICY=/cauteum/policy.yaml \
+    HOME=/cauteum/data/home \
+    PATH=/cauteum/data/home/.local/bin:/cauteum/data/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility
 USER sandbox
-ENTRYPOINT ["/usr/local/bin/whaleshell-init"]
+ENTRYPOINT ["/usr/local/bin/cauteum-init"]
 CMD ["--", "sleep", "infinity"]
 
 FROM ${DEBIAN_BASE} AS gui
@@ -130,28 +130,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && chromium --version
 
-COPY whaleshell-init /usr/local/bin/whaleshell-init
-COPY whaleshell-gui-boot /usr/local/bin/whaleshell-gui-boot
-COPY whaleshell-display-start /usr/local/bin/whaleshell-display-start
-COPY chromium-whaleshell /usr/local/bin/chromium-whaleshell
-RUN chmod 0755 /usr/local/bin/whaleshell-init /usr/local/bin/whaleshell-gui-boot \
-        /usr/local/bin/whaleshell-display-start /usr/local/bin/chromium-whaleshell \
-    && ln -sf /usr/local/bin/chromium-whaleshell /usr/local/bin/google-chrome \
-    && ln -sf /usr/local/bin/chromium-whaleshell /usr/local/bin/chrome \
+COPY cauteum-init /usr/local/bin/cauteum-init
+COPY cauteum-gui-boot /usr/local/bin/cauteum-gui-boot
+COPY cauteum-display-start /usr/local/bin/cauteum-display-start
+COPY chromium-cauteum /usr/local/bin/chromium-cauteum
+RUN chmod 0755 /usr/local/bin/cauteum-init /usr/local/bin/cauteum-gui-boot \
+        /usr/local/bin/cauteum-display-start /usr/local/bin/chromium-cauteum \
+    && ln -sf /usr/local/bin/chromium-cauteum /usr/local/bin/google-chrome \
+    && ln -sf /usr/local/bin/chromium-cauteum /usr/local/bin/chrome \
     && groupadd --system sandbox \
     && useradd --system --gid sandbox --home-dir /sandbox --create-home --shell /bin/bash sandbox \
-    && mkdir -p /whaleshell/data /workspace \
-    && chown -R sandbox:sandbox /whaleshell/data /sandbox /workspace
+    && mkdir -p /cauteum/data /workspace \
+    && chown -R sandbox:sandbox /cauteum/data /sandbox /workspace
 
-ENV WHALESHELL_POLICY=/whaleshell/policy.yaml \
-    HOME=/whaleshell/data/home \
-    PATH=/whaleshell/data/home/.local/bin:/whaleshell/data/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+ENV CAUTEUM_POLICY=/cauteum/policy.yaml \
+    HOME=/cauteum/data/home \
+    PATH=/cauteum/data/home/.local/bin:/cauteum/data/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     DISPLAY=:99 \
     DISPLAY_MODE=none \
-    WHALESHELL_DISPLAY_GEOM=1280x800x24 \
-    CHROME_BIN=/usr/local/bin/chromium-whaleshell \
-    BROWSER=/usr/local/bin/chromium-whaleshell
+    CAUTEUM_DISPLAY_GEOM=1280x800x24 \
+    CHROME_BIN=/usr/local/bin/chromium-cauteum \
+    BROWSER=/usr/local/bin/chromium-cauteum
 
 USER sandbox
-ENTRYPOINT ["/usr/local/bin/whaleshell-init"]
-CMD ["--", "/usr/local/bin/whaleshell-gui-boot"]
+ENTRYPOINT ["/usr/local/bin/cauteum-init"]
+CMD ["--", "/usr/local/bin/cauteum-gui-boot"]

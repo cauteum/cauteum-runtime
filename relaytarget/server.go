@@ -19,8 +19,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-core/relayproto"
+	"github.com/cauteum/cauteum-core/relayproto"
+	"github.com/cauteum/slogx"
 )
 
 const maxTargetLine = 4096

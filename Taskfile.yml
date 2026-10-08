@@ -25,21 +25,21 @@ tasks:
       - task: build
 
   image:cli:
-    desc: Build whaleshell-sandbox:local
+    desc: Build cauteum-sandbox:local
     cmds:
       - task: image
         vars:
           TARGET: cli
 
   image:gui:
-    desc: Build whaleshell-sandbox:gui
+    desc: Build cauteum-sandbox:gui
     cmds:
       - task: image
         vars:
           TARGET: gui
 
   image:gpu:
-    desc: Build whaleshell-sandbox:gpu
+    desc: Build cauteum-sandbox:gpu
     cmds:
       - task: image
         vars:
@@ -68,8 +68,8 @@ tasks:
         set -euo pipefail
         ROOT="{{.ROOT_DIR}}"
         # When included from org Taskfile as runtime:*, ROOT_DIR is the org root.
-        if [[ ! -d "$ROOT/cmd/whaleshell-init" && -d "$ROOT/whaleshell-runtime/cmd/whaleshell-init" ]]; then
-          ROOT="$ROOT/whaleshell-runtime"
+        if [[ ! -d "$ROOT/cmd/cauteum-init" && -d "$ROOT/cauteum-runtime/cmd/cauteum-init" ]]; then
+          ROOT="$ROOT/cauteum-runtime"
         fi
         TARGET="{{.TARGET}}"
         ARCH="{{.ARCH}}"
@@ -80,13 +80,13 @@ tasks:
         trap 'rm -rf "$STAGE"' EXIT
         IMG_DIR="$ROOT/{{.IMAGE_DIR}}"
 
-        echo "cross-compile whaleshell-init (linux/$ARCH)…"
-        GOOS=linux GOARCH="$ARCH" CGO_ENABLED=0 go build -C "$ROOT" -o "$STAGE/whaleshell-init" ./cmd/whaleshell-init
+        echo "cross-compile cauteum-init (linux/$ARCH)…"
+        GOOS=linux GOARCH="$ARCH" CGO_ENABLED=0 go build -C "$ROOT" -o "$STAGE/cauteum-init" ./cmd/cauteum-init
         cp "$IMG_DIR/Dockerfile" "$STAGE/Dockerfile"
-        cp "$IMG_DIR/whaleshell-gui-boot" "$STAGE/whaleshell-gui-boot"
-        cp "$IMG_DIR/whaleshell-display-start" "$STAGE/whaleshell-display-start"
-        cp "$IMG_DIR/chromium-whaleshell" "$STAGE/chromium-whaleshell"
-        chmod +x "$STAGE/whaleshell-gui-boot" "$STAGE/whaleshell-display-start" "$STAGE/chromium-whaleshell"
+        cp "$IMG_DIR/cauteum-gui-boot" "$STAGE/cauteum-gui-boot"
+        cp "$IMG_DIR/cauteum-display-start" "$STAGE/cauteum-display-start"
+        cp "$IMG_DIR/chromium-cauteum" "$STAGE/chromium-cauteum"
+        chmod +x "$STAGE/cauteum-gui-boot" "$STAGE/cauteum-display-start" "$STAGE/chromium-cauteum"
 
         build_one() {
           local t="$1" tag="$2"
@@ -96,17 +96,17 @@ tasks:
         }
 
         case "$TARGET" in
-          cli)  build_one cli "${WHALESHELL_SANDBOX_IMAGE:-whaleshell-sandbox:local}" ;;
-          gui)  build_one gui "${WHALESHELL_GUI_IMAGE:-whaleshell-sandbox:gui}" ;;
-          gpu)  build_one gpu "${WHALESHELL_GPU_IMAGE:-whaleshell-sandbox:gpu}" ;;
+          cli)  build_one cli "${CAUTEUM_SANDBOX_IMAGE:-cauteum-sandbox:local}" ;;
+          gui)  build_one gui "${CAUTEUM_GUI_IMAGE:-cauteum-sandbox:gui}" ;;
+          gpu)  build_one gpu "${CAUTEUM_GPU_IMAGE:-cauteum-sandbox:gpu}" ;;
           both)
-            build_one cli "${WHALESHELL_SANDBOX_IMAGE:-whaleshell-sandbox:local}"
-            build_one gui "${WHALESHELL_GUI_IMAGE:-whaleshell-sandbox:gui}"
+            build_one cli "${CAUTEUM_SANDBOX_IMAGE:-cauteum-sandbox:local}"
+            build_one gui "${CAUTEUM_GUI_IMAGE:-cauteum-sandbox:gui}"
             ;;
           all)
-            build_one cli "${WHALESHELL_SANDBOX_IMAGE:-whaleshell-sandbox:local}"
-            build_one gui "${WHALESHELL_GUI_IMAGE:-whaleshell-sandbox:gui}"
-            build_one gpu "${WHALESHELL_GPU_IMAGE:-whaleshell-sandbox:gpu}"
+            build_one cli "${CAUTEUM_SANDBOX_IMAGE:-cauteum-sandbox:local}"
+            build_one gui "${CAUTEUM_GUI_IMAGE:-cauteum-sandbox:gui}"
+            build_one gpu "${CAUTEUM_GPU_IMAGE:-cauteum-sandbox:gpu}"
             ;;
           *)
             echo "usage: task runtime:image TARGET=cli|gui|gpu|both|all" >&2

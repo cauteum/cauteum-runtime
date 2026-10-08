@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/whaleshell/whaleshell-core/relayproto"
-	"github.com/whaleshell/whaleshell-runtime/relaytarget"
+	"github.com/cauteum/cauteum-core/relayproto"
+	"github.com/cauteum/cauteum-runtime/relaytarget"
 )
 
 func TestConfigDelegatesLoopbackDialIntoSandbox(t *testing.T) {

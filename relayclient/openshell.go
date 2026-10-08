@@ -19,9 +19,9 @@ import (
 	"time"
 
 	openshellv1 "github.com/NVIDIA/OpenShell/sdk/go/proto/openshellv1"
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-core/relayproto"
-	"github.com/whaleshell/whaleshell-runtime/supervisorcontrol"
+	"github.com/cauteum/cauteum-core/relayproto"
+	"github.com/cauteum/cauteum-runtime/supervisorcontrol"
+	"github.com/cauteum/slogx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -281,9 +281,9 @@ func GRPCTarget(endpoint string) (string, bool, error) {
 // GatewayTLSConfigFromEnvironment loads the guest mTLS triplet mounted by the
 // Docker/Podman driver. Empty settings leave TLS verification to system roots.
 func GatewayTLSConfigFromEnvironment() (*tls.Config, error) {
-	caPath := strings.TrimSpace(os.Getenv("WHALESHELL_GUEST_TLS_CA"))
-	certPath := strings.TrimSpace(os.Getenv("WHALESHELL_GUEST_TLS_CERT"))
-	keyPath := strings.TrimSpace(os.Getenv("WHALESHELL_GUEST_TLS_KEY"))
+	caPath := strings.TrimSpace(os.Getenv("CAUTEUM_GUEST_TLS_CA"))
+	certPath := strings.TrimSpace(os.Getenv("CAUTEUM_GUEST_TLS_CERT"))
+	keyPath := strings.TrimSpace(os.Getenv("CAUTEUM_GUEST_TLS_KEY"))
 	if caPath == "" && certPath == "" && keyPath == "" {
 		return nil, nil
 	}

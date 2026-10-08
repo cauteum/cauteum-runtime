@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/whaleshell/whaleshell-core/policy"
+	"github.com/cauteum/cauteum-core/policy"
 )
 
 func targetFilesystemIDs(doc policy.Document) (int, int, error) {

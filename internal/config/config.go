@@ -12,11 +12,11 @@ type Config struct {
 	GatewayURL string
 }
 
-// Load reads WHALESHELL_* defaults.
+// Load reads CAUTEUM_* defaults.
 func Load() Config {
 	return Config{
-		PolicyPath: strings.TrimSpace(os.Getenv("WHALESHELL_POLICY")),
-		LogLevel:   strings.TrimSpace(os.Getenv("WHALESHELL_LOG_LEVEL")),
-		GatewayURL: strings.TrimSpace(os.Getenv("WHALESHELL_GATEWAY_URL")),
+		PolicyPath: strings.TrimSpace(os.Getenv("CAUTEUM_POLICY")),
+		LogLevel:   strings.TrimSpace(os.Getenv("CAUTEUM_LOG_LEVEL")),
+		GatewayURL: strings.TrimSpace(os.Getenv("CAUTEUM_GATEWAY_URL")),
 	}
 }

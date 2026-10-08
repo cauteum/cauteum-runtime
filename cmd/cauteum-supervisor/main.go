@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/whaleshell/whaleshell-runtime/internal/app/supervisor"
+	"github.com/cauteum/cauteum-runtime/internal/app/supervisor"
 )
 
 func main() {

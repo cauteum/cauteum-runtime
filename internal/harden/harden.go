@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/whaleshell/whaleshell-core/policy"
+	"github.com/cauteum/cauteum-core/policy"
 )
 
 // Mode controls fail-closed vs loud best-effort.
@@ -79,13 +79,13 @@ func Apply(_ context.Context, opts Options) (Result, error) {
 	if !opts.NoDrop && shouldDrop(opts.Doc) {
 		if err := dropPrivileges(opts.Doc); err != nil {
 			res.DropError = err.Error()
-			msg := fmt.Sprintf("whaleshell-init: privilege drop failed: %v", err)
+			msg := fmt.Sprintf("cauteum-init: privilege drop failed: %v", err)
 			fmt.Fprintln(opts.Log, msg+" (refusing to launch with the wrong process identity)")
 			return res, fmt.Errorf("harden: drop: %w", err)
 		}
 		res.DropApplied = true
-		if os.Getenv("WHALESHELL_HARDEN_VERBOSE") == "1" {
-			fmt.Fprintln(opts.Log, "whaleshell-init: privileges dropped")
+		if os.Getenv("CAUTEUM_HARDEN_VERBOSE") == "1" {
+			fmt.Fprintln(opts.Log, "cauteum-init: privileges dropped")
 		}
 	}
 	if noFS {
@@ -94,10 +94,10 @@ func Apply(_ context.Context, opts Options) (Result, error) {
 
 	abi, err := landlockABI()
 	res.LandlockABI = abi
-	verbose := os.Getenv("WHALESHELL_HARDEN_VERBOSE") == "1"
+	verbose := os.Getenv("CAUTEUM_HARDEN_VERBOSE") == "1"
 	if err != nil {
 		res.LandlockError = err.Error()
-		msg := fmt.Sprintf("whaleshell-init: landlock unavailable: %v", err)
+		msg := fmt.Sprintf("cauteum-init: landlock unavailable: %v", err)
 		if opts.Mode == ModeRequired {
 			fmt.Fprintln(opts.Log, msg+" (mode=required → fail)")
 			return res, fmt.Errorf("harden: landlock required: %w", err)
@@ -106,7 +106,7 @@ func Apply(_ context.Context, opts Options) (Result, error) {
 	} else {
 		if err := applyLandlock(opts.Doc); err != nil {
 			res.LandlockError = err.Error()
-			msg := fmt.Sprintf("whaleshell-init: landlock apply failed: %v", err)
+			msg := fmt.Sprintf("cauteum-init: landlock apply failed: %v", err)
 			if opts.Mode == ModeRequired {
 				fmt.Fprintln(opts.Log, msg+" (mode=required → fail)")
 				return res, fmt.Errorf("harden: landlock: %w", err)
@@ -115,7 +115,7 @@ func Apply(_ context.Context, opts Options) (Result, error) {
 		} else {
 			res.LandlockApplied = true
 			if verbose {
-				fmt.Fprintf(opts.Log, "whaleshell-init: landlock applied (abi≥%d)\n", abi)
+				fmt.Fprintf(opts.Log, "cauteum-init: landlock applied (abi≥%d)\n", abi)
 			}
 		}
 	}

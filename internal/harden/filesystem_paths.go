@@ -5,7 +5,7 @@ import (
 	"os"
 	"slices"
 
-	"github.com/whaleshell/whaleshell-core/policy"
+	"github.com/cauteum/cauteum-core/policy"
 )
 
 // filesystemPaths translates OpenShell filesystem_policy defaults and explicit

@@ -8,7 +8,7 @@
 
 ### Changed
 
-- Use `whaleshell-core` v0.1.0-beta.1 for relay errors with operation context.
+- Use `cauteum-core` v0.1.0-beta.1 for relay errors with operation context.
 
 ### Fixed
 

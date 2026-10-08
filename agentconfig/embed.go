@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
+// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
 // SPDX-License-Identifier: Apache-2.0
 
 package agentconfig
@@ -12,12 +12,12 @@ const agentsMDName = "AGENTS.md"
 
 // agentsMDBody is written to /AGENTS.md when missing.
 const agentsMDBody = "" +
-	"# whaleshell Sandbox Guidance\n" +
+	"# cauteum Sandbox Guidance\n" +
 	"\n" +
 	"When you see a policy deny / CONNECT 403, do not treat it as final if the user\n" +
-	"task still needs that request. Read `/etc/whaleshell/skills/policy_advisor.md`\n" +
+	"task still needs that request. Read `/etc/cauteum/skills/policy_advisor.md`\n" +
 	"and use the `policy-advisor` skill, then ask the operator to apply the\n" +
-	"narrowest change (`whaleshell policy set` / provider attach) before retrying.\n" +
+	"narrowest change (`cauteum policy set` / provider attach) before retrying.\n" +
 	"\n" +
 	"## Git / commits\n" +
 	"\n" +

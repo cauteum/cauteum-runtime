@@ -1,4 +1,4 @@
-// Package agent is the composition root for whaleshell-agent.
+// Package agent is the composition root for cauteum-agent.
 package agent
 
 import (
@@ -14,20 +14,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-runtime/internal/logging"
+	"github.com/cauteum/cauteum-runtime/internal/logging"
+	"github.com/cauteum/slogx"
 )
 
 func Run(args []string) error {
 	const op = "agent.run"
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	log := logging.Setup(ctx, logging.Options{Service: "whaleshell-agent"})
+	log := logging.Setup(ctx, logging.Options{Service: "cauteum-agent"})
 	ctx = logging.ToContext(ctx, log)
 	log = log.With(slog.String("op", op))
 
-	gateway := os.Getenv("WHALESHELL_GATEWAY")
-	name := os.Getenv("WHALESHELL_SANDBOX")
+	gateway := os.Getenv("CAUTEUM_GATEWAY")
+	name := os.Getenv("CAUTEUM_SANDBOX")
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--gateway":
@@ -37,14 +37,14 @@ func Run(args []string) error {
 			i++
 			name = args[i]
 		case "-h", "--help":
-			fmt.Fprintf(os.Stderr, "usage: whaleshell-agent --gateway URL --name SANDBOX\n")
+			fmt.Fprintf(os.Stderr, "usage: cauteum-agent --gateway URL --name SANDBOX\n")
 			return nil
 		default:
 			return fmt.Errorf("unknown flag %q", args[i])
 		}
 	}
 	if gateway == "" || name == "" {
-		return fmt.Errorf("whaleshell-agent: --gateway and --name required")
+		return fmt.Errorf("cauteum-agent: --gateway and --name required")
 	}
 	base := strings.TrimRight(gateway, "/")
 	log.Info("registering with gateway", slog.String("sandbox", name), slog.String("gateway", base))

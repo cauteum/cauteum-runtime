@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
+// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
 // SPDX-License-Identifier: Apache-2.0
 
 package agentconfig
@@ -22,7 +22,7 @@ type Staged struct {
 // Stage prepares only the built-in supervisor guidance; it does not parse or
 // translate any agent-specific manifest.
 func Stage(_ Options) (Staged, error) {
-	root, err := os.MkdirTemp("", "whaleshell-supervisor-guidance-*")
+	root, err := os.MkdirTemp("", "cauteum-supervisor-guidance-*")
 	if err != nil {
 		return Staged{}, err
 	}
@@ -32,21 +32,21 @@ func Stage(_ Options) (Staged, error) {
 			_ = os.RemoveAll(root)
 		}
 	}()
-	skillsDir := filepath.Join(root, "whaleshell", "skills")
+	skillsDir := filepath.Join(root, "cauteum", "skills")
 	if err := os.MkdirAll(skillsDir, 0o755); err != nil {
 		return Staged{}, err
 	}
 	if err := writeBuiltinSkills(skillsDir); err != nil {
 		return Staged{}, err
 	}
-	agentsPath := filepath.Join(root, "whaleshell", agentsMDName)
+	agentsPath := filepath.Join(root, "cauteum", agentsMDName)
 	if err := os.WriteFile(agentsPath, []byte(agentsMDBody), 0o444); err != nil {
 		return Staged{}, err
 	}
 	cleanup = false
 	return Staged{
 		Dir:           root,
-		EtcOSGHost:    filepath.Join(root, "whaleshell"),
+		EtcOSGHost:    filepath.Join(root, "cauteum"),
 		SkillsHostDir: skillsDir,
 	}, nil
 }

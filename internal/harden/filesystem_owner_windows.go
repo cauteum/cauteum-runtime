@@ -1,6 +1,6 @@
 package harden
 
-import "github.com/whaleshell/whaleshell-core/policy"
+import "github.com/cauteum/cauteum-core/policy"
 
 type filesystemPathOwner struct{}
 

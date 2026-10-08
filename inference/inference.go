@@ -1,6 +1,6 @@
 // Package inference is the product catalog / helpers for LLM egress (P5).
 //
-// whaleshell does not ship a managed inference.local rewrite proxy. Agents call
+// cauteum does not ship a managed inference.local rewrite proxy. Agents call
 // provider native hosts; policy.inference.providers expands into CONNECT
 // allow rules, and matching API keys are injected from the host env.
 package inference
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/whaleshell/whaleshell-core/policy"
+	"github.com/cauteum/cauteum-core/policy"
 )
 
 // ListBuiltins writes the builtin provider catalog.
@@ -66,7 +66,7 @@ func ShowEffective(w io.Writer, doc policy.Document) error {
 // WriteLocalSnippet prints a ready-to-use host-local inference policy fragment.
 func WriteLocalSnippet(w io.Writer) error {
 	_, err := io.WriteString(w, `# Host-local models (no inference.local rewrite proxy).
-# Agents call http://host.whaleshell.internal:<port>/v1/...
+# Agents call http://host.cauteum.internal:<port>/v1/...
 version: 1
 filesystem_policy:
   include_workdir: true
@@ -80,7 +80,7 @@ inference:
   # Or pin one server via profiles:
   # profiles:
   #   - id: vllm
-  #     host: host.whaleshell.internal
+  #     host: host.cauteum.internal
   #     port: 8000
   #     env_keys: [OPENAI_API_KEY]
   #     refresh: env

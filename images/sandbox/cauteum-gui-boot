@@ -1,8 +1,8 @@
 #!/bin/sh
-# Guest PID1 helper (after whaleshell-init): optional noVNC stack, then sleep.
+# Guest PID1 helper (after cauteum-init): optional noVNC stack, then sleep.
 set -eu
 if [ "${DISPLAY_MODE:-none}" = "novnc" ]; then
-  /usr/local/bin/whaleshell-display-start
+  /usr/local/bin/cauteum-display-start
 fi
 if [ "$#" -gt 0 ]; then
   exec "$@"

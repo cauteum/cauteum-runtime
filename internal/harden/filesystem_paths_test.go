@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-core/policy"
+	"github.com/cauteum/cauteum-core/policy"
 )
 
 func TestPrepareReadWritePathsRejectsSymlink(t *testing.T) {

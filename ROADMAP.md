@@ -1,6 +1,6 @@
-# Roadmap — whaleshell-runtime
+# Roadmap — cauteum-runtime
 
-Status: **v0.1.0-alpha.1** (alpha) · Depends on whaleshell-core / whaleshell-driver / whaleshell-proxy `v0.1.0-alpha.1`
+Status: **v0.1.0-alpha.1** (alpha) · Depends on cauteum-core / cauteum-driver / cauteum-proxy `v0.1.0-alpha.1`
 
 ## This module
 

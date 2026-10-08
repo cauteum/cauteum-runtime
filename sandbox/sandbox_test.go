@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-core"
-	"github.com/whaleshell/whaleshell-driver/driver"
+	"github.com/cauteum/cauteum-core"
+	"github.com/cauteum/cauteum-driver/driver"
 )
 
 type failingStartDriver struct {

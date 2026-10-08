@@ -20,7 +20,7 @@ import (
 func startServer(t *testing.T, cfg Config) (*ssh.Client, string) {
 	t.Helper()
 	if cfg.InitPath == "" {
-		cfg.InitPath = filepath.Join(t.TempDir(), "whaleshell-init")
+		cfg.InitPath = filepath.Join(t.TempDir(), "cauteum-init")
 		if err := os.WriteFile(cfg.InitPath, []byte("#!/bin/sh\n[ \"$1\" = \"--\" ] || exit 99\nshift\nexec \"$@\"\n"), 0o700); err != nil {
 			t.Fatal(err)
 		}
@@ -280,7 +280,7 @@ func TestUnknownChannelRefused(t *testing.T) {
 
 func TestChildrenWrappedByInit(t *testing.T) {
 	dir := t.TempDir()
-	initPath := filepath.Join(dir, "whaleshell-init")
+	initPath := filepath.Join(dir, "cauteum-init")
 	script := "#!/bin/sh\n[ \"$1\" = \"--\" ] || exit 99\nshift\necho wrapped\nexec \"$@\"\n"
 	if err := os.WriteFile(initPath, []byte(script), 0o755); err != nil {
 		t.Fatal(err)
@@ -300,7 +300,7 @@ func TestChildrenWrappedByInit(t *testing.T) {
 }
 
 func TestChildArgv(t *testing.T) {
-	initPath := filepath.Join(t.TempDir(), "whaleshell-init")
+	initPath := filepath.Join(t.TempDir(), "cauteum-init")
 	if err := os.WriteFile(initPath, []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
 		t.Fatal(err)
 	}

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-core/policy"
+	"github.com/cauteum/cauteum-core/policy"
 )
 
 func TestTargetIDsUsesOpenShellDriverIdentityBeforePolicy(t *testing.T) {
@@ -119,7 +119,7 @@ func TestTargetIDsDefaultsRootToSandbox(t *testing.T) {
 }
 
 func TestDropPrivilegesUsesPolicyIdentity(t *testing.T) {
-	const childEnv = "WHALESHELL_IDENTITY_TEST_CHILD"
+	const childEnv = "CAUTEUM_IDENTITY_TEST_CHILD"
 	t.Setenv(sandboxUIDEnv, "")
 	t.Setenv(sandboxGIDEnv, "")
 	if os.Getenv(childEnv) == "1" {
@@ -143,7 +143,7 @@ func TestDropPrivilegesUsesPolicyIdentity(t *testing.T) {
 }
 
 func TestDropPrivilegesAcceptsAlreadySelectedNonRootIdentity(t *testing.T) {
-	const childEnv = "WHALESHELL_NONROOT_IDENTITY_TEST_CHILD"
+	const childEnv = "CAUTEUM_NONROOT_IDENTITY_TEST_CHILD"
 	if os.Getenv(childEnv) == "1" {
 		uid, gid := os.Getuid(), os.Getgid()
 		doc := policy.Document{Process: &policy.Process{

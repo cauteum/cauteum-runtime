@@ -24,13 +24,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/whaleshell/slogx"
+	"github.com/cauteum/slogx"
 	"golang.org/x/crypto/ssh"
 )
 
 // EnvNoLoginShell selects `bash -c` instead of `bash -lc` for exec requests
 // (OpenShell OPENSHELL_NO_LOGIN_SHELL).
-const EnvNoLoginShell = "WHALESHELL_NO_LOGIN_SHELL"
+const EnvNoLoginShell = "CAUTEUM_NO_LOGIN_SHELL"
 
 // allowedEnv are the only client env requests applied to children.
 var allowedEnv = map[string]bool{
@@ -49,7 +49,7 @@ type Config struct {
 	// Shell is the login shell (default /bin/bash, then /bin/sh).
 	Shell string
 	// InitPath is required and wraps every child as `InitPath -- <argv>`;
-	// whaleshell-init applies Landlock / privilege drop from policy.
+	// cauteum-init applies Landlock / privilege drop from policy.
 	InitPath string
 	// Env is the base child environment (default os.Environ()).
 	Env []string
@@ -106,7 +106,7 @@ func New(cfg Config) (*Server, error) {
 	}
 	sc := &ssh.ServerConfig{
 		NoClientAuth:  true,
-		ServerVersion: "SSH-2.0-whaleshell-sshd",
+		ServerVersion: "SSH-2.0-cauteum-sshd",
 	}
 	sc.AddHostKey(cfg.HostKey)
 	return &Server{cfg: cfg, sshCfg: sc, log: log}, nil

@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/whaleshell/whaleshell-core"
-	"github.com/whaleshell/whaleshell-core/policy"
-	"github.com/whaleshell/whaleshell-driver/driver"
+	"github.com/cauteum/cauteum-core"
+	"github.com/cauteum/cauteum-core/policy"
+	"github.com/cauteum/cauteum-driver/driver"
 )
 
 const rollbackTimeout = 30 * time.Second

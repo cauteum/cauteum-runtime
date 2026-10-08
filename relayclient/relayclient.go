@@ -18,15 +18,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-core/relayproto"
+	"github.com/cauteum/cauteum-core/relayproto"
+	"github.com/cauteum/slogx"
 )
 
 // Config configures Run.
 type Config struct {
 	GatewayURL string
 	// GatewayGRPCEndpoint selects the pinned OpenShell supervisor protocol.
-	// When empty, Run uses the Whaleshell HTTP relay transport.
+	// When empty, Run uses the Cauteum HTTP relay transport.
 	GatewayGRPCEndpoint string
 	Sandbox             string
 	// Token is the sandbox-scoped supervisor token (never a user token).

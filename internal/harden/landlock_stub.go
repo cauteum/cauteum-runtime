@@ -5,7 +5,7 @@ package harden
 import (
 	"errors"
 
-	"github.com/whaleshell/whaleshell-core/policy"
+	"github.com/cauteum/cauteum-core/policy"
 )
 
 var errLandlockUnavailable = errors.New("landlock only available on linux")

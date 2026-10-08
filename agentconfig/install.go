@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
+// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
 // SPDX-License-Identifier: Apache-2.0
 
 package agentconfig
@@ -20,9 +20,9 @@ func Install(g Guest, st Staged) error {
 		return fmt.Errorf("agentconfig: nil guest")
 	}
 	if err := g.CopyTo(st.EtcOSGHost, "/etc"); err != nil {
-		return fmt.Errorf("agentconfig: /etc/whaleshell: %w", err)
+		return fmt.Errorf("agentconfig: /etc/cauteum: %w", err)
 	}
-	installAgents := fmt.Sprintf(`if [ -w / ] && [ ! -e /%s ] && [ ! -L /%s ]; then cp /etc/whaleshell/%s /%s; fi`, agentsMDName, agentsMDName, agentsMDName, agentsMDName)
+	installAgents := fmt.Sprintf(`if [ -w / ] && [ ! -e /%s ] && [ ! -L /%s ]; then cp /etc/cauteum/%s /%s; fi`, agentsMDName, agentsMDName, agentsMDName, agentsMDName)
 	if err := g.ExecRaw([]string{"/bin/bash", "-c", installAgents}); err != nil {
 		return fmt.Errorf("agentconfig: /AGENTS.md: %w", err)
 	}

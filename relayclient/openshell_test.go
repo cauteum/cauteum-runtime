@@ -62,19 +62,34 @@ func TestOpenShellSessionRefreshesSupervisorToken(t *testing.T) {
 	defer conn.Close()
 	client := openshellv1.NewOpenShellClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	instance := newOpenShellInstance("instance-1")
 	token := newSupervisorToken("initial-token")
 	cfg := Config{Sandbox: "sandbox-1", Log: slog.New(slog.NewTextHandler(io.Discard, nil)), TokenRefreshInterval: 20 * time.Millisecond}
-	err = openShellSession(ctx, client, cfg, "instance-1", instance, token)
-	if ctx.Err() == nil {
-		t.Fatalf("openShellSession returned before bounded shutdown: error=%v", err)
-	}
-	if got := backend.refreshes.Load(); got < 2 {
-		t.Fatalf("refresh calls=%d; want at least 2", got)
+	done := make(chan error, 1)
+	go func() {
+		done <- openShellSession(ctx, client, cfg, "instance-1", instance, token)
+	}()
+	deadline := time.After(2 * time.Second)
+	ticker := time.NewTicker(5 * time.Millisecond)
+	defer ticker.Stop()
+	for backend.refreshes.Load() < 2 {
+		select {
+		case err := <-done:
+			t.Fatalf("openShellSession returned before refreshing the token: %v", err)
+		case <-deadline:
+			t.Fatal("timed out waiting for supervisor token refreshes")
+		case <-ticker.C:
+		}
 	}
 	if got := token.get(); got == "initial-token" {
 		t.Fatal("supervisor token was not replaced after RefreshSandboxToken")
+	}
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("openShellSession did not stop after context cancellation")
 	}
 }

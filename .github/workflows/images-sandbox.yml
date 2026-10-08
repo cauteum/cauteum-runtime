@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
 # SPDX-License-Identifier: Apache-2.0
 name: images-sandbox
 
@@ -8,13 +8,13 @@ on:
     tags: ["v*"]
     paths:
       - "images/**"
-      - "cmd/whaleshell-init/**"
+      - "cmd/cauteum-init/**"
       - "harden/**"
       - ".github/workflows/images-sandbox.yml"
   pull_request:
     paths:
       - "images/**"
-      - "cmd/whaleshell-init/**"
+      - "cmd/cauteum-init/**"
       - "harden/**"
       - ".github/workflows/images-sandbox.yml"
   workflow_dispatch:
@@ -26,7 +26,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   # OpenShell-style: one image name per flavor under …/sandboxes/<name>
-  IMAGE_PREFIX: ghcr.io/whaleshell/whaleshell/sandboxes
+  IMAGE_PREFIX: ghcr.io/cauteum/cauteum/sandboxes
   GOWORK: ${{ github.workspace }}/go.work
 
 jobs:
@@ -42,33 +42,33 @@ jobs:
           - target: gpu
             name: gpu
     steps:
-      - name: Checkout whaleshell-runtime
+      - name: Checkout cauteum-runtime
         uses: actions/checkout@v4
         with:
-          path: whaleshell-runtime
-      - name: Checkout whaleshell-core
+          path: cauteum-runtime
+      - name: Checkout cauteum-core
         uses: actions/checkout@v4
         with:
-          repository: whaleshell/whaleshell-core
-          path: whaleshell-core
+          repository: cauteum/cauteum-core
+          path: cauteum-core
           ref: main
-      - name: Checkout whaleshell-driver
+      - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
-          repository: whaleshell/whaleshell-driver
-          path: whaleshell-driver
+          repository: cauteum/cauteum-driver
+          path: cauteum-driver
           ref: main
-      - name: Checkout whaleshell-proxy
+      - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
-          repository: whaleshell/whaleshell-proxy
-          path: whaleshell-proxy
+          repository: cauteum/cauteum-proxy
+          path: cauteum-proxy
           ref: main
 
       - name: Checkout slogx
         uses: actions/checkout@v4
         with:
-          repository: whaleshell/slogx
+          repository: cauteum/slogx
           path: slogx
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -78,20 +78,20 @@ jobs:
           {
             echo 'go 1.27.0'
             echo 'use ('
-            for d in whaleshell-* slogx; do
+            for d in cauteum-* slogx; do
               if [[ -d "$d" ]]; then
                 echo "  ./$d"
               fi
             done
             echo ')'
             echo 'replace ('
-            for d in whaleshell-*; do
+            for d in cauteum-*; do
               if [[ -d "$d" ]]; then
-                echo "  github.com/whaleshell/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-alpha.1 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
-              echo '  github.com/whaleshell/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-alpha.1 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -102,13 +102,13 @@ jobs:
           go-version: "1.27"
           cache: true
           cache-dependency-path: |
-            whaleshell-*/go.sum
+            cauteum-*/go.sum
             slogx/go.sum
       - uses: docker/setup-buildx-action@v3
-      - name: Build whaleshell-init into image context
-        working-directory: whaleshell-runtime
+      - name: Build cauteum-init into image context
+        working-directory: cauteum-runtime
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o images/sandbox/whaleshell-init ./cmd/whaleshell-init
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o images/sandbox/cauteum-init ./cmd/cauteum-init
       - name: Login GHCR
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
@@ -129,8 +129,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: whaleshell-runtime/images/sandbox
-          file: whaleshell-runtime/images/sandbox/Dockerfile
+          context: cauteum-runtime/images/sandbox
+          file: cauteum-runtime/images/sandbox/Dockerfile
           target: ${{ matrix.target }}
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}

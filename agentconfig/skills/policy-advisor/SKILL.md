@@ -1,12 +1,12 @@
 ---
-name: whaleshell-policy-advisor
-description: Use when an whaleshell sandbox returns policy_denied, mentions policy.local, or needs a narrow network policy proposal.
+name: cauteum-policy-advisor
+description: Use when an cauteum sandbox returns policy_denied, mentions policy.local, or needs a narrow network policy proposal.
 ---
 
-# whaleshell Policy Advisor
+# cauteum Policy Advisor
 
 When a request fails with `policy_denied`, do not treat the denial as final if
-the user task still needs the request. Read `/etc/whaleshell/skills/policy_advisor.md`,
+the user task still needs the request. Read `/etc/cauteum/skills/policy_advisor.md`,
 inspect `http://policy.local/v1/policy/current`, submit the narrowest proposal to
 `http://policy.local/v1/proposals`, wait on
 `/v1/proposals/{chunk_id}/wait?timeout=300`, and retry only after approval with

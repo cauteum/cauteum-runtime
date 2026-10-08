@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/whaleshell/whaleshell-core/policy"
+	"github.com/cauteum/cauteum-core/policy"
 	"golang.org/x/sys/unix"
 )
 

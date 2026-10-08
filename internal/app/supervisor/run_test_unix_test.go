@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/whaleshell/whaleshell-runtime/supervisorcontrol"
+	"github.com/cauteum/cauteum-runtime/supervisorcontrol"
 )
 
 func workloadArgs(args ...string) []string { return args }
@@ -59,7 +59,7 @@ func TestRunReportsAndFinalizesNaturalMainProcessExit(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer server.Close()
-	t.Setenv("WHALESHELL_SUPERVISOR_CONTROL_SOCKET", path)
+	t.Setenv("CAUTEUM_SUPERVISOR_CONTROL_SOCKET", path)
 	code, err := Run(workloadArgs(exitCommand(7)...))
 	if err != nil || code != 7 {
 		t.Fatalf("Run=(%d,%v), want (7,nil)", code, err)

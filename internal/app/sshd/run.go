@@ -1,4 +1,4 @@
-// Package sshd is the composition root for whaleshell-sshd.
+// Package sshd is the composition root for cauteum-sshd.
 package sshd
 
 import (
@@ -11,18 +11,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/whaleshell/whaleshell-core/defaults"
-	"github.com/whaleshell/whaleshell-runtime/sshserver"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/cauteum-runtime/sshserver"
 	"golang.org/x/crypto/ssh"
 )
 
-const usage = `usage: whaleshell-sshd [--socket PATH] [--host-key FILE] [--shell PATH] [--workdir DIR]
+const usage = `usage: cauteum-sshd [--socket PATH] [--host-key FILE] [--shell PATH] [--workdir DIR]
 
 Serves SSH on a root-only Unix socket (0600, parent 0700). There is no TCP
 listener: clients reach it only through the gateway supervisor relay.
 `
 
-// Run starts whaleshell-sshd.
+// Run starts cauteum-sshd.
 func Run(args []string) error {
 	socket := defaults.GuestSSHSocket
 	hostKeyPath := ""
@@ -66,7 +66,7 @@ func Run(args []string) error {
 		}
 		cfg.HostKey = signer
 	}
-	cfg.Log = slog.New(slog.NewJSONHandler(os.Stderr, nil)).With(slog.String("component", "whaleshell-sshd"))
+	cfg.Log = slog.New(slog.NewJSONHandler(os.Stderr, nil)).With(slog.String("component", "cauteum-sshd"))
 	if c, err := net.DialTimeout("unix", socket, time.Second); err == nil {
 		_ = c.Close()
 		cfg.Log.Info("already running", slog.String("op", "sshd.listen"), slog.String("socket", socket))

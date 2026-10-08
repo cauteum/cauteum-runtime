@@ -1,13 +1,13 @@
-module github.com/whaleshell/whaleshell-runtime
+module github.com/cauteum/cauteum-runtime
 
 go 1.27.0
 
 require (
 	github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c
 	github.com/landlock-lsm/go-landlock v0.10.1
-	github.com/whaleshell/slogx v0.1.0-alpha.2
-	github.com/whaleshell/whaleshell-core v0.1.0-beta.1
-	github.com/whaleshell/whaleshell-driver v0.1.0-alpha.2
+	github.com/cauteum/slogx v0.1.0-alpha.2
+	github.com/cauteum/cauteum-core v0.1.0-beta.1
+	github.com/cauteum/cauteum-driver v0.1.0-alpha.2
 	golang.org/x/crypto v0.57.0
 	golang.org/x/sys v0.48.0
 	google.golang.org/grpc v1.84.0

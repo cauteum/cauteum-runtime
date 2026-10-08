@@ -1,4 +1,4 @@
-// Package logging configures structured process logs for whaleshell binaries via slogx.
+// Package logging configures structured process logs for cauteum binaries via slogx.
 package logging
 
 import (
@@ -8,14 +8,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/whaleshell/slogx"
+	"github.com/cauteum/slogx"
 )
 
 // Env keys (optional).
 const (
-	EnvLogLevel     = "WHALESHELL_LOG_LEVEL"      // trace|debug|info|warn|error|fatal
-	EnvLogFormat    = "WHALESHELL_LOG_FORMAT"     // json|text
-	EnvLogLevelAddr = "WHALESHELL_LOG_LEVEL_ADDR" // e.g. 127.0.0.1:9099 for live level HTTP
+	EnvLogLevel     = "CAUTEUM_LOG_LEVEL"      // trace|debug|info|warn|error|fatal
+	EnvLogFormat    = "CAUTEUM_LOG_FORMAT"     // json|text
+	EnvLogLevelAddr = "CAUTEUM_LOG_LEVEL_ADDR" // e.g. 127.0.0.1:9099 for live level HTTP
 )
 
 // Options tweak Setup.
