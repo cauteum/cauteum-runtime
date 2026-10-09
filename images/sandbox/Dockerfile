@@ -10,7 +10,7 @@
 # gui  — Debian bookworm: Chromium + Xvfb/openbox/noVNC
 # gpu  — Debian bookworm + CUDA *userland* packages; host injects libcuda via CDI
 
-ARG DEBIAN_BASE=debian:bookworm
+ARG DEBIAN_BASE=debian:bookworm@sha256:2c037a04925515fdd6ea85ea14a682d0e79931f5e9f5d07b6dbfc6ba12f9e858
 
 FROM ${DEBIAN_BASE} AS cli
 LABEL org.opencontainers.image.title="cauteum-sandbox" \
@@ -64,7 +64,7 @@ RUN npm install -g \
     && npm cache clean --force
 
 # uv for Python toolchain (optional; system python3 remains available)
-COPY --from=ghcr.io/astral-sh/uv:0.10.8 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.10.8@sha256:88234bc9e09c2b2f6d176a3daf411419eb0370d450a08129257410de9cfafd2a /uv /usr/local/bin/uv
 
 COPY cauteum-init /usr/local/bin/cauteum-init
 RUN chmod 0755 /usr/local/bin/cauteum-init \

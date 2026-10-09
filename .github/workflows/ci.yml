@@ -37,21 +37,21 @@ jobs:
         with:
           repository: cauteum/cauteum-core
           path: cauteum-core
-          ref: main
+          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
 
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-driver
           path: cauteum-driver
-          ref: main
+          ref: d244c3ac7e41631bbdcd44908829c93181634d49
 
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-proxy
           path: cauteum-proxy
-          ref: main
+          ref: e0620208414a87b38d8f4420a9ceed73e6a02466
 
       - name: Checkout slogx
         uses: actions/checkout@v4
@@ -87,7 +87,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.27"
+          go-version: "1.27.2"
           cache: true
           cache-dependency-path: |
             cauteum-*/go.sum
@@ -121,21 +121,21 @@ jobs:
         with:
           repository: cauteum/cauteum-core
           path: cauteum-core
-          ref: main
+          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
 
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-driver
           path: cauteum-driver
-          ref: main
+          ref: d244c3ac7e41631bbdcd44908829c93181634d49
 
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-proxy
           path: cauteum-proxy
-          ref: main
+          ref: e0620208414a87b38d8f4420a9ceed73e6a02466
 
       - name: Checkout slogx
         uses: actions/checkout@v4
@@ -171,7 +171,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.27"
+          go-version: "1.27.2"
           cache: true
           cache-dependency-path: |
             cauteum-*/go.sum
@@ -205,21 +205,21 @@ jobs:
         with:
           repository: cauteum/cauteum-core
           path: cauteum-core
-          ref: main
+          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
 
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-driver
           path: cauteum-driver
-          ref: main
+          ref: d244c3ac7e41631bbdcd44908829c93181634d49
 
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-proxy
           path: cauteum-proxy
-          ref: main
+          ref: e0620208414a87b38d8f4420a9ceed73e6a02466
 
       - name: Checkout slogx
         uses: actions/checkout@v4
@@ -255,7 +255,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.27"
+          go-version: "1.27.2"
           cache: true
           cache-dependency-path: |
             cauteum-*/go.sum
@@ -287,21 +287,21 @@ jobs:
         with:
           repository: cauteum/cauteum-core
           path: cauteum-core
-          ref: main
+          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
 
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-driver
           path: cauteum-driver
-          ref: main
+          ref: d244c3ac7e41631bbdcd44908829c93181634d49
 
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-proxy
           path: cauteum-proxy
-          ref: main
+          ref: e0620208414a87b38d8f4420a9ceed73e6a02466
 
       - name: Checkout slogx
         uses: actions/checkout@v4
@@ -337,7 +337,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.27"
+          go-version: "1.27.2"
           cache: true
           cache-dependency-path: |
             cauteum-*/go.sum

@@ -40,6 +40,87 @@ type PKCEConfig struct {
 	RedirectPort int
 }
 
+// AuthorizationRequest contains short-lived state required to finish an
+// Authorization Code + PKCE exchange. Keep it on the trusted server side.
+type AuthorizationRequest struct {
+	URL           string
+	State         string
+	Verifier      string
+	RedirectURI   string
+	TokenEndpoint string
+}
+
+// PrepareAuthorization creates an authorization URL for a caller-owned HTTP
+// callback. This lets browser-facing services share the same PKCE behavior as
+// BrowserPKCE without exposing the verifier to the browser.
+func PrepareAuthorization(ctx context.Context, cfg PKCEConfig, redirectURI string) (AuthorizationRequest, error) {
+	if strings.TrimSpace(cfg.ClientID) == "" {
+		return AuthorizationRequest{}, fmt.Errorf("oidc pkce: client_id required")
+	}
+	cfg.Issuer = strings.TrimRight(strings.TrimSpace(cfg.Issuer), "/")
+	if err := validateIssuerURL(cfg.Issuer, cfg.AllowInsecureHTTP); err != nil {
+		return AuthorizationRequest{}, err
+	}
+	redirect, err := url.Parse(redirectURI)
+	redirectSchemeAllowed := err == nil && (redirect.Scheme == "https" || redirect.Scheme == "http" && isLoopbackRedirectHost(redirect.Hostname()))
+	if err != nil || redirect.Host == "" || redirect.User != nil || redirect.Fragment != "" || !redirectSchemeAllowed {
+		return AuthorizationRequest{}, fmt.Errorf("oidc pkce: redirect URI must use https or loopback http")
+	}
+	if cfg.HTTPClient == nil {
+		cfg.HTTPClient = &http.Client{Timeout: oauthRequestTimeout}
+	}
+	disc, err := Discover(ctx, cfg.Issuer, cfg.HTTPClient)
+	if err != nil {
+		return AuthorizationRequest{}, err
+	}
+	if err := validateOAuthEndpoint(disc.AuthorizationEndpoint, cfg.AllowInsecureHTTP); err != nil {
+		return AuthorizationRequest{}, fmt.Errorf("oidc authorization endpoint: %w", err)
+	}
+	if err := validateOAuthEndpoint(disc.TokenEndpoint, cfg.AllowInsecureHTTP); err != nil {
+		return AuthorizationRequest{}, fmt.Errorf("oidc token endpoint: %w", err)
+	}
+	verifier, challenge, err := newPKCE()
+	if err != nil {
+		return AuthorizationRequest{}, err
+	}
+	state, err := randomURLString(16)
+	if err != nil {
+		return AuthorizationRequest{}, err
+	}
+	q := authorizationValues(cfg, redirectURI, state, challenge)
+	return AuthorizationRequest{
+		URL: disc.AuthorizationEndpoint + "?" + q.Encode(), State: state,
+		Verifier: verifier, RedirectURI: redirectURI, TokenEndpoint: disc.TokenEndpoint,
+	}, nil
+}
+
+func validateOAuthEndpoint(raw string, allowInsecureHTTP bool) error {
+	endpoint, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || endpoint.Host == "" || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" {
+		return fmt.Errorf("invalid URL")
+	}
+	if endpoint.Scheme == "https" {
+		return nil
+	}
+	if endpoint.Scheme == "http" && allowInsecureHTTP && isLoopbackRedirectHost(endpoint.Hostname()) {
+		return nil
+	}
+	return fmt.Errorf("must use https (or explicitly allowed loopback http)")
+}
+
+// ExchangeAuthorizationCode completes a request returned by
+// PrepareAuthorization after the caller has verified its state and browser
+// binding.
+func ExchangeAuthorizationCode(ctx context.Context, cfg PKCEConfig, prepared AuthorizationRequest, code string) (TokenBundle, error) {
+	if strings.TrimSpace(code) == "" || prepared.TokenEndpoint == "" || prepared.RedirectURI == "" || prepared.Verifier == "" {
+		return TokenBundle{}, fmt.Errorf("oidc pkce: incomplete authorization callback")
+	}
+	if cfg.HTTPClient == nil {
+		cfg.HTTPClient = &http.Client{Timeout: oauthRequestTimeout}
+	}
+	return exchangeCode(ctx, cfg, prepared.TokenEndpoint, code, prepared.RedirectURI, prepared.Verifier)
+}
+
 // BrowserPKCE runs Authorization Code + PKCE against the issuer.
 func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 	if strings.TrimSpace(cfg.ClientID) == "" {
@@ -50,10 +131,6 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 	}
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = defaultLoginTimeout
-	}
-	disc, err := Discover(ctx, cfg.Issuer, cfg.HTTPClient)
-	if err != nil {
-		return TokenBundle{}, err
 	}
 	listenAddr := "127.0.0.1:0"
 	if cfg.RedirectPort > 0 {
@@ -67,37 +144,10 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 	port := ln.Addr().(*net.TCPAddr).Port
 	redirectURI := fmt.Sprintf("http://127.0.0.1:%d/callback", port)
 
-	verifier, challenge, err := newPKCE()
+	prepared, err := PrepareAuthorization(ctx, cfg, redirectURI)
 	if err != nil {
 		return TokenBundle{}, err
 	}
-	state, err := randomURLString(16)
-	if err != nil {
-		return TokenBundle{}, err
-	}
-
-	var scopes strings.Builder
-	scopes.WriteString("openid")
-	if s := strings.TrimSpace(cfg.Scopes); s != "" {
-		for p := range strings.FieldsSeq(s) {
-			if p != "openid" {
-				scopes.WriteString(" " + p)
-			}
-		}
-	}
-
-	q := url.Values{}
-	q.Set("response_type", "code")
-	q.Set("client_id", cfg.ClientID)
-	q.Set("redirect_uri", redirectURI)
-	q.Set("scope", scopes.String())
-	q.Set("state", state)
-	q.Set("code_challenge", challenge)
-	q.Set("code_challenge_method", "S256")
-	if cfg.Audience != "" {
-		q.Set("audience", cfg.Audience)
-	}
-	authURL := disc.AuthorizationEndpoint + "?" + q.Encode()
 
 	type result struct {
 		code string
@@ -110,7 +160,7 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 				http.NotFound(w, r)
 				return
 			}
-			if r.URL.Query().Get("state") != state {
+			if r.URL.Query().Get("state") != prepared.State {
 				http.Error(w, "state mismatch", http.StatusBadRequest)
 				ch <- result{err: fmt.Errorf("oidc: state mismatch")}
 				return
@@ -140,7 +190,7 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 	}()
 
 	if cfg.OpenURL != nil {
-		_ = cfg.OpenURL(authURL)
+		_ = cfg.OpenURL(prepared.URL)
 	}
 
 	var code string
@@ -156,7 +206,38 @@ func BrowserPKCE(ctx context.Context, cfg PKCEConfig) (TokenBundle, error) {
 		return TokenBundle{}, fmt.Errorf("oidc: timed out waiting for browser callback")
 	}
 
-	return exchangeCode(ctx, cfg, disc.TokenEndpoint, code, redirectURI, verifier)
+	return ExchangeAuthorizationCode(ctx, cfg, prepared, code)
+}
+
+func authorizationValues(cfg PKCEConfig, redirectURI, state, challenge string) url.Values {
+	var scopes strings.Builder
+	scopes.WriteString("openid")
+	for scope := range strings.FieldsSeq(strings.TrimSpace(cfg.Scopes)) {
+		if scope != "openid" {
+			scopes.WriteString(" " + scope)
+		}
+	}
+	q := url.Values{
+		"response_type":         {"code"},
+		"client_id":             {cfg.ClientID},
+		"redirect_uri":          {redirectURI},
+		"scope":                 {scopes.String()},
+		"state":                 {state},
+		"code_challenge":        {challenge},
+		"code_challenge_method": {"S256"},
+	}
+	if cfg.Audience != "" {
+		q.Set("audience", cfg.Audience)
+	}
+	return q
+}
+
+func isLoopbackRedirectHost(host string) bool {
+	if strings.EqualFold(host, "localhost") || strings.HasSuffix(strings.ToLower(host), ".localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // RefreshTokens exchanges a refresh_token at the issuer token endpoint.

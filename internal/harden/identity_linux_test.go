@@ -52,6 +52,28 @@ func TestTargetIDsUsesOCIImageUserForOmittedPolicyFields(t *testing.T) {
 	}
 }
 
+func TestTargetIDsTreatsEmptyOCIImageUserAsUnset(t *testing.T) {
+	t.Setenv(sandboxUIDEnv, "")
+	t.Setenv(sandboxGIDEnv, "")
+	t.Setenv(ociImageUserEnv, "")
+	if os.Geteuid() != 0 {
+		t.Skip("root fallback only applies to root supervisor")
+	}
+	expected, err := user.Lookup("sandbox")
+	if err != nil {
+		t.Skipf("sandbox account unavailable: %v", err)
+	}
+	wantUID, _ := strconv.Atoi(expected.Uid)
+	wantGID, _ := strconv.Atoi(expected.Gid)
+	uid, gid, _, err := targetIDs(policy.Document{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if uid != wantUID || gid != wantGID {
+		t.Fatalf("resolved identity = %d:%d, want sandbox %d:%d", uid, gid, wantUID, wantGID)
+	}
+}
+
 func TestTargetIDsPolicyFieldsOverrideOCIComponents(t *testing.T) {
 	t.Setenv(sandboxUIDEnv, "")
 	t.Setenv(sandboxGIDEnv, "")

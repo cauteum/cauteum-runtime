@@ -62,7 +62,7 @@ func targetIDs(doc policy.Document) (uid, gid int, groups []int, err error) {
 	ociUserForGroups := ""
 	needOCIUser := userSpec == "" && uidRaw == ""
 	needOCIGroup := groupSpec == "" && gidRaw == ""
-	if ociRaw, hasOCIIdentity := os.LookupEnv(ociImageUserEnv); hasOCIIdentity && (needOCIUser || needOCIGroup) {
+	if ociRaw, hasOCIIdentity := os.LookupEnv(ociImageUserEnv); hasOCIIdentity && ociRaw != "" && (needOCIUser || needOCIGroup) {
 		ociUID, ociGID, err := resolveOCIImageUser(ociRaw, needOCIUser, needOCIGroup)
 		if err != nil {
 			return 0, 0, nil, err

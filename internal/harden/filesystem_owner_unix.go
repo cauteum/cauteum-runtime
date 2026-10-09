@@ -33,3 +33,5 @@ func (o *filesystemPathOwner) resolve() error {
 func (o *filesystemPathOwner) apply(path string) error {
 	return os.Chown(path, o.uid, o.gid)
 }
+
+func filesystemOwnerCanReconcile() bool { return os.Geteuid() == 0 }

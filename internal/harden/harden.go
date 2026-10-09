@@ -57,11 +57,17 @@ func Apply(_ context.Context, opts Options) (Result, error) {
 	if opts.Log == nil {
 		opts.Log = os.Stderr
 	}
-	if opts.Mode == "" {
+	// A policy hard_requirement is a security floor. An explicit CLI mode may
+	// request stricter handling, but must never downgrade the policy to
+	// best_effort.
+	if opts.Mode == "" || ModeFromPolicy(opts.Doc) == ModeRequired {
 		opts.Mode = ModeFromPolicy(opts.Doc)
 	}
 	res := Result{
 		SeccompNote: SeccompNote(),
+	}
+	if err := reconcilePersistentDataOwnership(opts.Doc); err != nil {
+		return res, fmt.Errorf("harden: reconcile persistent data ownership: %w", err)
 	}
 	if err := prepareReadWritePaths(opts.Doc); err != nil {
 		return res, fmt.Errorf("harden: prepare filesystem policy: %w", err)
