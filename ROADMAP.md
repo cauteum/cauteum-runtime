@@ -1,14 +1,14 @@
 # Roadmap — cauteum-runtime
 
-Status: **v0.1.0-alpha.1** (alpha) · Depends on cauteum-core / cauteum-driver / cauteum-proxy `v0.1.0-alpha.1`
+Status: **v0.1.4** (stable numbered release) · Depends on core / driver `v0.1.4`; slogx `v0.1.2`
 
 ## This module
 
 | ID | Item | Notes |
 |----|------|-------|
 | T1 | **Image catalog** | Keep GHCR `sandboxes/{base,gui,gpu}` in sync with tags |
-| T2 | **Secrets store** | Map/Env → Vault adapters (hub R3) |
-| T3 | **Identity federation** | Align gateway OIDC/mTLS and workload identity with OpenShell config and authorization semantics (hub R3) |
+| T2 | **Secrets store** | Map/Env → Vault adapters |
+| T3 | **Identity federation** | Align gateway OIDC/mTLS and workload identity with OpenShell config and authorization semantics |
 | T4 | **Harden depth** | Landlock/seccomp profile documentation |
 
 ## Release
