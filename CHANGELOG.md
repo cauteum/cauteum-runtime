@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+## [v0.1.0-beta.2] - 2026-10-10
+
+### Added
+
+- Prepare and exchange OIDC PKCE authorization codes for the Go management console.
+
+### Fixed
+
+- Harden runtime identity, filesystem ownership and path handling across supported platforms.
+- Align sandbox image builds and module workflows with the current Go toolchain.
+
 ## [v0.1.0-beta.1] - 2026-10-07
 
 ### Added
