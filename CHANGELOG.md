@@ -8,6 +8,10 @@
 
 - Prepare and exchange OIDC PKCE authorization codes for the Go management console.
 
+### Changed
+
+- Resolve `cauteum-core` v0.1.0-beta.2 and `slogx` v0.1.0-beta.1 from published tags.
+
 ### Fixed
 
 - Harden runtime identity, filesystem ownership and path handling across supported platforms.
