@@ -19,8 +19,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cauteum/cauteum-core/relayproto"
-	"github.com/cauteum/slogx"
+	"github.com/cauteum-haven/cauteum-core/relayproto"
+	"github.com/cauteum-haven/slogx"
 )
 
 const maxTargetLine = 4096

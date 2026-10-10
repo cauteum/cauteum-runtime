@@ -19,9 +19,9 @@ import (
 	"time"
 
 	openshellv1 "github.com/NVIDIA/OpenShell/sdk/go/proto/openshellv1"
-	"github.com/cauteum/cauteum-core/relayproto"
-	"github.com/cauteum/cauteum-runtime/supervisorcontrol"
-	"github.com/cauteum/slogx"
+	"github.com/cauteum-haven/cauteum-core/relayproto"
+	"github.com/cauteum-haven/cauteum-runtime/supervisorcontrol"
+	"github.com/cauteum-haven/slogx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"

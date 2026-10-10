@@ -14,8 +14,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cauteum/cauteum-runtime/relaytarget"
-	"github.com/cauteum/cauteum-runtime/supervisorcontrol"
+	"github.com/cauteum-haven/cauteum-runtime/relaytarget"
+	"github.com/cauteum-haven/cauteum-runtime/supervisorcontrol"
 )
 
 // Run starts a parsed workload argv, forwards termination signals to its

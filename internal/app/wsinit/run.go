@@ -11,8 +11,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/cauteum/cauteum-core/policy"
-	"github.com/cauteum/cauteum-runtime/internal/harden"
+	"github.com/cauteum-haven/cauteum-core/policy"
+	"github.com/cauteum-haven/cauteum-runtime/internal/harden"
 )
 
 func Run(args []string) error {

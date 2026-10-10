@@ -4,7 +4,7 @@ package harden
 
 import "errors"
 
-import "github.com/cauteum/cauteum-core/policy"
+import "github.com/cauteum-haven/cauteum-core/policy"
 
 var errPrivilegeDropUnavailable = errors.New("privilege drop only available on linux")
 

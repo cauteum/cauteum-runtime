@@ -5,7 +5,7 @@ package harden
 import (
 	"os"
 
-	"github.com/cauteum/cauteum-core/policy"
+	"github.com/cauteum-haven/cauteum-core/policy"
 )
 
 type filesystemPathOwner struct {

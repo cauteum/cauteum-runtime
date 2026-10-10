@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cauteum/slogx"
+	"github.com/cauteum-haven/slogx"
 	"golang.org/x/crypto/ssh"
 )
 

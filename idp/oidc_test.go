@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum/cauteum-runtime/idp"
+	"github.com/cauteum-haven/cauteum-runtime/idp"
 )
 
 func TestOIDCValidateRS256(t *testing.T) {

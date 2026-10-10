@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cauteum/cauteum-runtime/internal/app/wsinit"
+	"github.com/cauteum-haven/cauteum-runtime/internal/app/wsinit"
 )
 
 func main() {

@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cauteum/cauteum-runtime/internal/logging"
-	"github.com/cauteum/slogx"
+	"github.com/cauteum-haven/cauteum-runtime/internal/logging"
+	"github.com/cauteum-haven/slogx"
 )
 
 func Run(args []string) error {

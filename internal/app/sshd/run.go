@@ -11,8 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cauteum/cauteum-core/defaults"
-	"github.com/cauteum/cauteum-runtime/sshserver"
+	"github.com/cauteum-haven/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-runtime/sshserver"
 	"golang.org/x/crypto/ssh"
 )
 

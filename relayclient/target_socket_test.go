@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum/cauteum-core/relayproto"
-	"github.com/cauteum/cauteum-runtime/relaytarget"
+	"github.com/cauteum-haven/cauteum-core/relayproto"
+	"github.com/cauteum-haven/cauteum-runtime/relaytarget"
 )
 
 func TestConfigDelegatesLoopbackDialIntoSandbox(t *testing.T) {

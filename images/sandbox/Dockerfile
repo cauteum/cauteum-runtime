@@ -16,7 +16,7 @@ FROM ${DEBIAN_BASE} AS cli
 LABEL org.opencontainers.image.title="cauteum-sandbox" \
       org.opencontainers.image.description="cauteum agent sandbox (OpenShell-like toolset)" \
       org.opencontainers.image.licenses="Apache-2.0" \
-      org.opencontainers.image.source="https://github.com/cauteum/cauteum-runtime"
+      org.opencontainers.image.source="https://github.com/cauteum-haven/cauteum-runtime"
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1

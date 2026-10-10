@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cauteum/cauteum-runtime/secrets"
+	"github.com/cauteum-haven/cauteum-runtime/secrets"
 )
 
 func TestInspectPinnedEnv(t *testing.T) {

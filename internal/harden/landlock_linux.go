@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cauteum/cauteum-core/policy"
+	"github.com/cauteum-haven/cauteum-core/policy"
 	ll "github.com/landlock-lsm/go-landlock/landlock"
 	"golang.org/x/sys/unix"
 )
