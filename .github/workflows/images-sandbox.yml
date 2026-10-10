@@ -1,0 +1,138 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
+# SPDX-License-Identifier: Apache-2.0
+name: images-sandbox
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - "images/**"
+      - "cmd/cauteum-init/**"
+      - "harden/**"
+      - ".github/workflows/images-sandbox.yml"
+  pull_request:
+    paths:
+      - "images/**"
+      - "cmd/cauteum-init/**"
+      - "harden/**"
+      - ".github/workflows/images-sandbox.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  # OpenShell-style: one image name per flavor under …/sandboxes/<name>
+  IMAGE_PREFIX: ghcr.io/cauteum/cauteum/sandboxes
+  GOWORK: ${{ github.workspace }}/go.work
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: cli
+            name: base
+          - target: gui
+            name: gui
+          - target: gpu
+            name: gpu
+    steps:
+      - name: Checkout cauteum-runtime
+        uses: actions/checkout@v4
+        with:
+          path: cauteum-runtime
+      - name: Checkout cauteum-core
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-core
+          path: cauteum-core
+          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
+      - name: Checkout cauteum-driver
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-driver
+          path: cauteum-driver
+          ref: e614c8f432d34db52c5f4a989a274442e83e289c
+      - name: Checkout cauteum-proxy
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-proxy
+          path: cauteum-proxy
+          ref: e0620208414a87b38d8f4420a9ceed73e6a02466
+
+      - name: Checkout slogx
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/slogx
+          path: slogx
+      - name: Write go.work
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo 'go 1.27.0'
+            echo 'use ('
+            for d in cauteum-* slogx; do
+              if [[ -d "$d" ]]; then
+                echo "  ./$d"
+              fi
+            done
+            echo ')'
+            echo 'replace ('
+            for d in cauteum-*; do
+              if [[ -d "$d" ]]; then
+                echo "  github.com/cauteum/${d} v0.1.0-alpha.1 => ./$d"
+              fi
+            done
+            if [[ -d slogx ]]; then
+              echo '  github.com/cauteum/slogx v0.1.0-alpha.1 => ./slogx'
+            fi
+            echo ')'
+          } > "${{ github.workspace }}/go.work"
+          echo "Wrote go.work:" && cat "${{ github.workspace }}/go.work"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.2"
+          cache: true
+          cache-dependency-path: |
+            cauteum-*/go.sum
+            slogx/go.sum
+      - uses: docker/setup-buildx-action@v3
+      - name: Build cauteum-init into image context
+        working-directory: cauteum-runtime
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o images/sandbox/cauteum-init ./cmd/cauteum-init
+      - name: Login GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=main,enable={{is_default_branch}}
+            type=sha
+            type=semver,pattern={{version}}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: cauteum-runtime/images/sandbox
+          file: cauteum-runtime/images/sandbox/Dockerfile
+          target: ${{ matrix.target }}
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

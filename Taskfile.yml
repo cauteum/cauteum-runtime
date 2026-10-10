@@ -1,0 +1,115 @@
+version: "3"
+
+vars:
+  IMAGE_DIR: images/sandbox
+  ARCH: '{{.ARCH | default ""}}'
+
+tasks:
+  test:
+    desc: go test ./...
+    cmds:
+      - CGO_ENABLED=0 go test ./...
+  build:
+    desc: go build ./...
+    cmds:
+      - go build ./...
+  vet:
+    desc: go vet ./...
+    cmds:
+      - go vet ./...
+  check:quick:
+    desc: vet + test + build
+    cmds:
+      - task: vet
+      - task: test
+      - task: build
+
+  image:cli:
+    desc: Build cauteum-sandbox:local
+    cmds:
+      - task: image
+        vars:
+          TARGET: cli
+
+  image:gui:
+    desc: Build cauteum-sandbox:gui
+    cmds:
+      - task: image
+        vars:
+          TARGET: gui
+
+  image:gpu:
+    desc: Build cauteum-sandbox:gpu
+    cmds:
+      - task: image
+        vars:
+          TARGET: gpu
+
+  image:both:
+    desc: Build cli + gui images
+    cmds:
+      - task: image
+        vars:
+          TARGET: both
+
+  image:all:
+    desc: Build cli + gui + gpu images
+    cmds:
+      - task: image
+        vars:
+          TARGET: all
+
+  image:
+    desc: "Build sandbox image(s). TARGET=cli|gui|gpu|both|all (default gui)"
+    vars:
+      TARGET: '{{.TARGET | default "gui"}}'
+    cmds:
+      - |
+        set -euo pipefail
+        ROOT="{{.ROOT_DIR}}"
+        # When included from org Taskfile as runtime:*, ROOT_DIR is the org root.
+        if [[ ! -d "$ROOT/cmd/cauteum-init" && -d "$ROOT/cauteum-runtime/cmd/cauteum-init" ]]; then
+          ROOT="$ROOT/cauteum-runtime"
+        fi
+        TARGET="{{.TARGET}}"
+        ARCH="{{.ARCH}}"
+        if [[ -z "$ARCH" ]]; then
+          ARCH="${GOARCH:-$(go env GOARCH)}"
+        fi
+        STAGE="$(mktemp -d)"
+        trap 'rm -rf "$STAGE"' EXIT
+        IMG_DIR="$ROOT/{{.IMAGE_DIR}}"
+
+        echo "cross-compile cauteum-init (linux/$ARCH)…"
+        GOOS=linux GOARCH="$ARCH" CGO_ENABLED=0 go build -C "$ROOT" -o "$STAGE/cauteum-init" ./cmd/cauteum-init
+        cp "$IMG_DIR/Dockerfile" "$STAGE/Dockerfile"
+        cp "$IMG_DIR/cauteum-gui-boot" "$STAGE/cauteum-gui-boot"
+        cp "$IMG_DIR/cauteum-display-start" "$STAGE/cauteum-display-start"
+        cp "$IMG_DIR/chromium-cauteum" "$STAGE/chromium-cauteum"
+        chmod +x "$STAGE/cauteum-gui-boot" "$STAGE/cauteum-display-start" "$STAGE/chromium-cauteum"
+
+        build_one() {
+          local t="$1" tag="$2"
+          echo "docker build --target $t -t $tag …"
+          docker build --target "$t" -t "$tag" "$STAGE"
+          echo "ok: $tag"
+        }
+
+        case "$TARGET" in
+          cli)  build_one cli "${CAUTEUM_SANDBOX_IMAGE:-cauteum-sandbox:local}" ;;
+          gui)  build_one gui "${CAUTEUM_GUI_IMAGE:-cauteum-sandbox:gui}" ;;
+          gpu)  build_one gpu "${CAUTEUM_GPU_IMAGE:-cauteum-sandbox:gpu}" ;;
+          both)
+            build_one cli "${CAUTEUM_SANDBOX_IMAGE:-cauteum-sandbox:local}"
+            build_one gui "${CAUTEUM_GUI_IMAGE:-cauteum-sandbox:gui}"
+            ;;
+          all)
+            build_one cli "${CAUTEUM_SANDBOX_IMAGE:-cauteum-sandbox:local}"
+            build_one gui "${CAUTEUM_GUI_IMAGE:-cauteum-sandbox:gui}"
+            build_one gpu "${CAUTEUM_GPU_IMAGE:-cauteum-sandbox:gpu}"
+            ;;
+          *)
+            echo "usage: task runtime:image TARGET=cli|gui|gpu|both|all" >&2
+            exit 2
+            ;;
+        esac
