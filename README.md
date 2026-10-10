@@ -20,7 +20,7 @@
 
 ## Overview
 
-See the [architecture](https://cauteum.github.io/concepts/architecture/) and [security](https://cauteum.github.io/concepts/security/) pages for the sandbox process and its trust boundaries.
+See the [architecture](https://cauteum-haven.github.io/concepts/architecture/) and [security](https://cauteum-haven.github.io/concepts/security/) pages for the sandbox process and its trust boundaries.
 
 **cauteum-runtime** ties sandbox creation together: guest init (`cauteum-init`), Landlock/seccomp harden, secrets store, inference snippets, and the Debian-based sandbox image flavors published to GHCR.
 
