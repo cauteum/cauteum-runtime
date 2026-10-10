@@ -2,7 +2,7 @@
 *.test
 *.out
 /osg
-/cauteum-init
-/cauteum-gateway
+/cautem-init
+/cautem-gateway
 .DS_Store
-/cauteum-agent
+/cautem-agent

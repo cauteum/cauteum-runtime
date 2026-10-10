@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/cautem/cauteum-core/policy"
+	"github.com/cautem/cautem-core/policy"
 	"golang.org/x/sys/unix"
 )
 

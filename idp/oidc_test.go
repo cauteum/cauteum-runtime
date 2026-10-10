@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cautem/cauteum-runtime/idp"
+	"github.com/cautem/cautem-runtime/idp"
 )
 
 func TestOIDCValidateRS256(t *testing.T) {
@@ -52,14 +52,14 @@ func TestOIDCValidateRS256(t *testing.T) {
 	tok := mustSignJWT(t, key, map[string]any{
 		"iss": issuer,
 		"sub": "user-1",
-		"aud": "cauteum",
+		"aud": "cautem",
 		"exp": time.Now().Add(time.Hour).Unix(),
 		"iat": time.Now().Unix(),
 	})
 
 	v, err := idp.NewOIDC(idp.OIDCConfig{
 		Issuer:            issuer,
-		Audience:          "cauteum",
+		Audience:          "cautem",
 		AllowInsecureHTTP: true,
 		HTTPClient:        ts.Client(),
 	})

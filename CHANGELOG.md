@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [v0.1.6] - 2026-10-11
+
+### Changed
+
+- Rename the module, runtime identifiers and project references to the `cautem` namespace.
+
 ## [v0.1.0-beta.2] - 2026-10-10
 
 ### Added
@@ -10,7 +16,7 @@
 
 ### Changed
 
-- Resolve `cauteum-core` v0.1.0-beta.2, `cauteum-driver` v0.1.0-beta.2 and `slogx` v0.1.0-beta.1 from published tags.
+- Resolve `cautem-core` v0.1.0-beta.2, `cautem-driver` v0.1.0-beta.2 and `slogx` v0.1.0-beta.1 from published tags.
 
 ### Fixed
 
@@ -25,7 +31,7 @@
 
 ### Changed
 
-- Use `cauteum-core` v0.1.0-beta.1 for relay errors with operation context.
+- Use `cautem-core` v0.1.0-beta.1 for relay errors with operation context.
 
 ### Fixed
 

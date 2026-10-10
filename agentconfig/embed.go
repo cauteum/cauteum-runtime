@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
+// SPDX-FileCopyrightText: Copyright (c) 2026 cautem
 // SPDX-License-Identifier: Apache-2.0
 
 package agentconfig
@@ -12,12 +12,12 @@ const agentsMDName = "AGENTS.md"
 
 // agentsMDBody is written to /AGENTS.md when missing.
 const agentsMDBody = "" +
-	"# cauteum Sandbox Guidance\n" +
+	"# cautem Sandbox Guidance\n" +
 	"\n" +
 	"When you see a policy deny / CONNECT 403, do not treat it as final if the user\n" +
-	"task still needs that request. Read `/etc/cauteum/skills/policy_advisor.md`\n" +
+	"task still needs that request. Read `/etc/cautem/skills/policy_advisor.md`\n" +
 	"and use the `policy-advisor` skill, then ask the operator to apply the\n" +
-	"narrowest change (`cauteum policy set` / provider attach) before retrying.\n" +
+	"narrowest change (`cautem policy set` / provider attach) before retrying.\n" +
 	"\n" +
 	"## Git / commits\n" +
 	"\n" +

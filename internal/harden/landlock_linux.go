@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cautem/cauteum-core/policy"
+	"github.com/cautem/cautem-core/policy"
 	ll "github.com/landlock-lsm/go-landlock/landlock"
 	"golang.org/x/sys/unix"
 )
@@ -48,7 +48,7 @@ func applyLandlock(doc policy.Document) error {
 	if doc.Display != nil && strings.EqualFold(doc.Display.Mode, "novnc") {
 		reads = append(reads, "/tmp/.X11-unix", "/usr/share", "/usr/lib",
 			"/etc/chromium", "/usr/lib/chromium", "/usr/bin/chromium")
-		writes = append(writes, "/tmp/.X11-unix", "/tmp/cauteum-display", "/home", "/run/user")
+		writes = append(writes, "/tmp/.X11-unix", "/tmp/cautem-display", "/home", "/run/user")
 	}
 	reads = unique(reads)
 	writes = unique(writes)

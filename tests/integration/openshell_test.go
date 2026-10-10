@@ -12,8 +12,8 @@ import (
 	"time"
 
 	openshellv1 "github.com/NVIDIA/OpenShell/sdk/go/proto/openshellv1"
-	"github.com/cautem/cauteum-runtime/relayclient"
-	"github.com/cautem/cauteum-runtime/supervisorcontrol"
+	"github.com/cautem/cautem-runtime/relayclient"
+	"github.com/cautem/cautem-runtime/supervisorcontrol"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -258,13 +258,13 @@ func TestGRPCTarget(t *testing.T) {
 }
 
 func TestGatewayTLSConfigRequiresCompleteTriplet(t *testing.T) {
-	t.Setenv("CAUTEUM_GUEST_TLS_CA", "")
-	t.Setenv("CAUTEUM_GUEST_TLS_CERT", "")
-	t.Setenv("CAUTEUM_GUEST_TLS_KEY", "")
+	t.Setenv("CAUTEM_GUEST_TLS_CA", "")
+	t.Setenv("CAUTEM_GUEST_TLS_CERT", "")
+	t.Setenv("CAUTEM_GUEST_TLS_KEY", "")
 	if config, err := relayclient.GatewayTLSConfigFromEnvironment(); err != nil || config != nil {
 		t.Fatalf("empty TLS environment=(%v,%v), want (nil,nil)", config, err)
 	}
-	t.Setenv("CAUTEUM_GUEST_TLS_CA", "/ca.pem")
+	t.Setenv("CAUTEM_GUEST_TLS_CA", "/ca.pem")
 	if config, err := relayclient.GatewayTLSConfigFromEnvironment(); err == nil || config != nil {
 		t.Fatalf("partial TLS environment=(%v,%v), want error", config, err)
 	}

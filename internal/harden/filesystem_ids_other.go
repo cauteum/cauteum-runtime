@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cautem/cauteum-core/policy"
+	"github.com/cautem/cautem-core/policy"
 )
 
 func targetFilesystemIDs(doc policy.Document) (int, int, error) {

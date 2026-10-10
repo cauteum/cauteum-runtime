@@ -1,5 +1,5 @@
 // Package audit emits structured security / lifecycle events in OCSF shorthand
-// (NVIDIA OpenShell–compatible) for agent observation via `cauteum logs` / `cauteum term`.
+// (NVIDIA OpenShell–compatible) for agent observation via `cautem logs` / `cautem term`.
 package audit
 
 import (

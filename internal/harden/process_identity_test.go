@@ -3,12 +3,12 @@ package harden
 import (
 	"testing"
 
-	"github.com/cautem/cauteum-core/policy"
+	"github.com/cautem/cautem-core/policy"
 )
 
 func TestProcessIdentityFailureIsNeverBestEffort(t *testing.T) {
 	_, err := Apply(t.Context(), Options{
-		Doc:  policy.Document{Process: &policy.Process{RunAsUser: "cauteum-user-that-does-not-exist"}},
+		Doc:  policy.Document{Process: &policy.Process{RunAsUser: "cautem-user-that-does-not-exist"}},
 		Mode: ModeBestEffort,
 	})
 	if err == nil {

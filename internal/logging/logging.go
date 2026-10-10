@@ -1,4 +1,4 @@
-// Package logging configures structured process logs for cauteum binaries via slogx.
+// Package logging configures structured process logs for cautem binaries via slogx.
 package logging
 
 import (
@@ -13,9 +13,9 @@ import (
 
 // Env keys (optional).
 const (
-	EnvLogLevel     = "CAUTEUM_LOG_LEVEL"      // trace|debug|info|warn|error|fatal
-	EnvLogFormat    = "CAUTEUM_LOG_FORMAT"     // json|text
-	EnvLogLevelAddr = "CAUTEUM_LOG_LEVEL_ADDR" // e.g. 127.0.0.1:9099 for live level HTTP
+	EnvLogLevel     = "CAUTEM_LOG_LEVEL"      // trace|debug|info|warn|error|fatal
+	EnvLogFormat    = "CAUTEM_LOG_FORMAT"     // json|text
+	EnvLogLevelAddr = "CAUTEM_LOG_LEVEL_ADDR" // e.g. 127.0.0.1:9099 for live level HTTP
 )
 
 // Options tweak Setup.

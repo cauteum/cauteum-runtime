@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
+// SPDX-FileCopyrightText: Copyright (c) 2026 cautem
 // SPDX-License-Identifier: Apache-2.0
 
 // Package agentconfig stages and installs only supervisor-owned policy guidance.
