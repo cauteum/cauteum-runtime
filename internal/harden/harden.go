@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cauteum-haven/cauteum-core/policy"
+	"github.com/cautem/cauteum-core/policy"
 )
 
 // Mode controls fail-closed vs loud best-effort.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cauteum-haven/cauteum-runtime/internal/app/agent"
+	"github.com/cautem/cauteum-runtime/internal/app/agent"
 )
 
 func main() {

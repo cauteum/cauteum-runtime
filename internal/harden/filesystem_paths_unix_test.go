@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/cauteum-haven/cauteum-core/policy"
+	"github.com/cautem/cauteum-core/policy"
 )
 
 func TestPrepareReadWritePathsCreatesAndOwnsMissingDirectory(t *testing.T) {

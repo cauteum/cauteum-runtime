@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/cauteum-haven/cauteum-core/policy"
+	"github.com/cautem/cauteum-core/policy"
 )
 
 // ListBuiltins writes the builtin provider catalog.

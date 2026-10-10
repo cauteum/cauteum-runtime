@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/cauteum-haven/cauteum-core/policy"
+	"github.com/cautem/cauteum-core/policy"
 )
 
 // filesystemPaths translates OpenShell filesystem_policy defaults and explicit

@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/cauteum-haven/cauteum-runtime/idp"
+	"github.com/cautem/cauteum-runtime/idp"
 )
 
 func TestPrepareAndExchangeAuthorizationCode(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cauteum-haven/cauteum-core/policy"
+	"github.com/cautem/cauteum-core/policy"
 )
 
 func TestPrepareReadWritePathsCreatesMissingDirectoryOnWindows(t *testing.T) {

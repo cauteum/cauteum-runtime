@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cauteum-haven/cauteum-runtime/internal/app/sshd"
+	"github.com/cautem/cauteum-runtime/internal/app/sshd"
 )
 
 func main() {

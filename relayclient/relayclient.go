@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cauteum-haven/cauteum-core/relayproto"
-	"github.com/cauteum-haven/slogx"
+	"github.com/cautem/cauteum-core/relayproto"
+	"github.com/cautem/slogx"
 )
 
 // Config configures Run.

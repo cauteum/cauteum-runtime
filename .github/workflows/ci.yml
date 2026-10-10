@@ -35,28 +35,28 @@ jobs:
       - name: Checkout cauteum-core
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-core
+          repository: cautem/cauteum-core
           path: cauteum-core
           ref: bb9395227b3b3c9818edb29097e35822bf317356
 
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-driver
+          repository: cautem/cauteum-driver
           path: cauteum-driver
           ref: a28c2a972f721d9be93ffb55f15859c59d44709f
 
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-proxy
+          repository: cautem/cauteum-proxy
           path: cauteum-proxy
           ref: 9e846dc859865cf01a78bd978b371569b16f194e
 
       - name: Checkout slogx
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/slogx
+          repository: cautem/slogx
           path: slogx
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -75,11 +75,11 @@ jobs:
             echo 'replace ('
             for d in cauteum-*; do
               if [[ -d "$d" ]]; then
-                echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cautem/${d} v0.1.0-alpha.1 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
-              echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cautem/slogx v0.1.0-alpha.1 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -119,28 +119,28 @@ jobs:
       - name: Checkout cauteum-core
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-core
+          repository: cautem/cauteum-core
           path: cauteum-core
           ref: bb9395227b3b3c9818edb29097e35822bf317356
 
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-driver
+          repository: cautem/cauteum-driver
           path: cauteum-driver
           ref: a28c2a972f721d9be93ffb55f15859c59d44709f
 
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-proxy
+          repository: cautem/cauteum-proxy
           path: cauteum-proxy
           ref: 9e846dc859865cf01a78bd978b371569b16f194e
 
       - name: Checkout slogx
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/slogx
+          repository: cautem/slogx
           path: slogx
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -159,11 +159,11 @@ jobs:
             echo 'replace ('
             for d in cauteum-*; do
               if [[ -d "$d" ]]; then
-                echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cautem/${d} v0.1.0-alpha.1 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
-              echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cautem/slogx v0.1.0-alpha.1 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -203,28 +203,28 @@ jobs:
       - name: Checkout cauteum-core
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-core
+          repository: cautem/cauteum-core
           path: cauteum-core
           ref: bb9395227b3b3c9818edb29097e35822bf317356
 
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-driver
+          repository: cautem/cauteum-driver
           path: cauteum-driver
           ref: a28c2a972f721d9be93ffb55f15859c59d44709f
 
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-proxy
+          repository: cautem/cauteum-proxy
           path: cauteum-proxy
           ref: 9e846dc859865cf01a78bd978b371569b16f194e
 
       - name: Checkout slogx
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/slogx
+          repository: cautem/slogx
           path: slogx
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -243,11 +243,11 @@ jobs:
             echo 'replace ('
             for d in cauteum-*; do
               if [[ -d "$d" ]]; then
-                echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cautem/${d} v0.1.0-alpha.1 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
-              echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cautem/slogx v0.1.0-alpha.1 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -285,28 +285,28 @@ jobs:
       - name: Checkout cauteum-core
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-core
+          repository: cautem/cauteum-core
           path: cauteum-core
           ref: bb9395227b3b3c9818edb29097e35822bf317356
 
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-driver
+          repository: cautem/cauteum-driver
           path: cauteum-driver
           ref: a28c2a972f721d9be93ffb55f15859c59d44709f
 
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/cauteum-proxy
+          repository: cautem/cauteum-proxy
           path: cauteum-proxy
           ref: 9e846dc859865cf01a78bd978b371569b16f194e
 
       - name: Checkout slogx
         uses: actions/checkout@v4
         with:
-          repository: cauteum-haven/slogx
+          repository: cautem/slogx
           path: slogx
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -325,11 +325,11 @@ jobs:
             echo 'replace ('
             for d in cauteum-*; do
               if [[ -d "$d" ]]; then
-                echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cautem/${d} v0.1.0-alpha.1 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
-              echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cautem/slogx v0.1.0-alpha.1 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"

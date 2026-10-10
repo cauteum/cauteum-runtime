@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cauteum-haven/cauteum-runtime/internal/app/supervisor"
+	"github.com/cautem/cauteum-runtime/internal/app/supervisor"
 )
 
 func main() {

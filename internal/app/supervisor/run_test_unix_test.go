@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum-haven/cauteum-runtime/supervisorcontrol"
+	"github.com/cautem/cauteum-runtime/supervisorcontrol"
 )
 
 func workloadArgs(args ...string) []string { return args }

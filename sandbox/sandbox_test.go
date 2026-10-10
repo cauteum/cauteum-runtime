@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/cauteum-haven/cauteum-core"
-	"github.com/cauteum-haven/cauteum-driver/driver"
+	"github.com/cautem/cauteum-core"
+	"github.com/cautem/cauteum-driver/driver"
 )
 
 type failingStartDriver struct {

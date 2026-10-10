@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/cauteum-haven/cauteum-core/policy"
+	"github.com/cautem/cauteum-core/policy"
 )
 
 func TestTargetIDsUsesOpenShellDriverIdentityBeforePolicy(t *testing.T) {
