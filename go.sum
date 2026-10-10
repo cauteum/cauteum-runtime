@@ -2,8 +2,8 @@ github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c h1:UPhoAjI
 github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c/go.mod h1:zdG7v32UKU9U/zMxJ5F/nFRtUOpCUf0R6yu7k+adbxo=
 github.com/cauteum/cauteum-core v0.1.0-beta.2 h1:XBMEDKj8OFruw+cj6MCAQoC8/aNZ+c90s2W8CEStjWE=
 github.com/cauteum/cauteum-core v0.1.0-beta.2/go.mod h1:5AGbBVlwFMIT2mDruFMxzekJT/Fx/kdQZvbEtbGCR3s=
-github.com/cauteum/cauteum-driver v0.1.0-beta.1.0.20261008214530-d244c3ac7e41 h1:nNvEnzC3VwrAXuIZ4DjCMIyd3JEvs3cxTBP/CiNkYfs=
-github.com/cauteum/cauteum-driver v0.1.0-beta.1.0.20261008214530-d244c3ac7e41/go.mod h1:sFnB+2T5epc1qdD+tci3uE7xF4f/ebTlwhpkCRpDfeA=
+github.com/cauteum/cauteum-driver v0.1.0-beta.2 h1:W78xtBcptmEimrkl/67R7O4zBbwGJEzTHWgWL2QelVc=
+github.com/cauteum/cauteum-driver v0.1.0-beta.2/go.mod h1:HouwKl4QgjvdHUOQjOM5bamKqzD9Z/InCNvturjayNU=
 github.com/cauteum/slogx v0.1.0-beta.1 h1:MylFIK1gJzD79AsadQFnW7pUWJhWlGotuU2AZWSO+lc=
 github.com/cauteum/slogx v0.1.0-beta.1/go.mod h1:1AqivhTL1lHfJ42pHQTDnVBLcCtMcTyAVQZCglkm6KU=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

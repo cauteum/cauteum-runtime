@@ -10,7 +10,7 @@
 
 ### Changed
 
-- Resolve `cauteum-core` v0.1.0-beta.2 and `slogx` v0.1.0-beta.1 from published tags.
+- Resolve `cauteum-core` v0.1.0-beta.2, `cauteum-driver` v0.1.0-beta.2 and `slogx` v0.1.0-beta.1 from published tags.
 
 ### Fixed
 
