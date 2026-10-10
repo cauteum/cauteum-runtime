@@ -51,19 +51,19 @@ jobs:
         with:
           repository: cauteum-haven/cauteum-core
           path: cauteum-core
-          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
+          ref: 69e1d1339884cf72933ff6dda7c9b54822db7225
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
           repository: cauteum-haven/cauteum-driver
           path: cauteum-driver
-          ref: e614c8f432d34db52c5f4a989a274442e83e289c
+          ref: c8eaf63a5a6b5c6d2613323d426a507fdce32265
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
           repository: cauteum-haven/cauteum-proxy
           path: cauteum-proxy
-          ref: e0620208414a87b38d8f4420a9ceed73e6a02466
+          ref: b9b05cd3dc3d3b3aca99fec8591260365f7871ee
 
       - name: Checkout slogx
         uses: actions/checkout@v4
