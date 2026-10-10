@@ -28,7 +28,7 @@ See the [architecture](https://cauteum-haven.github.io/concepts/architecture/) a
 
 | Category | Capabilities |
 |----------|--------------|
-| **Images** | `sandboxes/{base,gui,gpu}` on `ghcr.io/cauteum/cauteum` |
+| **Images** | `sandboxes/{base,gui,gpu}` on `ghcr.io/cauteum-haven/cauteum` |
 | **Init** | `cauteum-init` — Landlock, seccomp, workspace mount |
 | **Supervisor** | `cauteum-supervisor` — PID 1 workload lifecycle and sandbox-side loopback dial socket for `ForwardTcp` |
 | **Relay** | `relaytarget` — validates and dials loopback TCP targets inside the sandbox network namespace over the private shared Unix socket |
@@ -45,9 +45,9 @@ Build from this checkout in the sibling `go.work` workspace. The published alpha
 **Images (after CI publish):**
 
 ```text
-ghcr.io/cauteum/cauteum/sandboxes/base:latest
-ghcr.io/cauteum/cauteum/sandboxes/gui:latest
-ghcr.io/cauteum/cauteum/sandboxes/gpu:latest
+ghcr.io/cauteum-haven/cauteum/sandboxes/base:latest
+ghcr.io/cauteum-haven/cauteum/sandboxes/gui:latest
+ghcr.io/cauteum-haven/cauteum/sandboxes/gpu:latest
 ```
 
 **Requirements:** Go 1.27+

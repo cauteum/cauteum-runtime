@@ -6,8 +6,8 @@ toolchain go1.27.2
 
 require (
 	github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c
-	github.com/cauteum-haven/cauteum-core v0.1.2
-	github.com/cauteum-haven/cauteum-driver v0.1.2
+	github.com/cauteum-haven/cauteum-core v0.1.4
+	github.com/cauteum-haven/cauteum-driver v0.1.4
 	github.com/cauteum-haven/slogx v0.1.2
 	github.com/landlock-lsm/go-landlock v0.10.1
 	golang.org/x/crypto v0.57.0

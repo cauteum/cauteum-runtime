@@ -26,7 +26,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   # OpenShell-style: one image name per flavor under …/sandboxes/<name>
-  IMAGE_PREFIX: ghcr.io/cauteum/cauteum/sandboxes
+  IMAGE_PREFIX: ghcr.io/cauteum-haven/cauteum/sandboxes
   GOWORK: ${{ github.workspace }}/go.work
 
 jobs:
