@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cautem/cauteum-core/relayproto"
+	"github.com/cautem/cautem-core/relayproto"
 	"github.com/cautem/slogx"
 )
 
@@ -26,7 +26,7 @@ import (
 type Config struct {
 	GatewayURL string
 	// GatewayGRPCEndpoint selects the pinned OpenShell supervisor protocol.
-	// When empty, Run uses the Cauteum HTTP relay transport.
+	// When empty, Run uses the cautem HTTP relay transport.
 	GatewayGRPCEndpoint string
 	Sandbox             string
 	// Token is the sandbox-scoped supervisor token (never a user token).

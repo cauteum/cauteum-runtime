@@ -1,10 +1,10 @@
-# SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
+# SPDX-FileCopyrightText: Copyright (c) 2026 cautem
 # SPDX-License-Identifier: Apache-2.0
 
-# cauteum Policy Advisor
+# cautem Policy Advisor
 
 Use this when the sandbox proxy blocks a network request (CONNECT 403 /
-`policy_denied`, or deny lines in `cauteum logs`).
+`policy_denied`, or deny lines in `cautem logs`).
 
 ## Goal
 
@@ -28,7 +28,7 @@ The operator approves; do not bypass the proxy.
 3. Prefer L7 `protocol: rest` or `protocol: mcp` with exact method/path/tool.
 4. `POST /v1/proposals` with one narrow `addRule`.
 5. Tell the operator the `chunk_id`. They run:
-   `cauteum rule approve --chunk-id <id>` (or `cauteum rule reject --chunk-id <id> --reason …`).
+   `cautem rule approve --chunk-id <id>` (or `cautem rule reject --chunk-id <id> --reason …`).
 6. `GET /v1/proposals/{id}/wait?timeout=300`:
    - `approved` + `policy_reloaded: true` → retry the original request.
    - `approved` + `policy_reloaded: false` → wait once more (`timeout=30`).

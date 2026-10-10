@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/cautem/cauteum-core/policy"
+	"github.com/cautem/cautem-core/policy"
 )
 
 // filesystemPaths translates OpenShell filesystem_policy defaults and explicit
@@ -60,13 +60,13 @@ func prepareReadWritePaths(doc policy.Document) error {
 // ownership through the container's user namespace mapping. The workspace
 // bind mount is deliberately excluded.
 func reconcilePersistentDataOwnership(doc policy.Document) error {
-	if os.Getenv("CAUTEUM_RECONCILE_DATA_OWNERSHIP") != "1" {
+	if os.Getenv("CAUTEM_RECONCILE_DATA_OWNERSHIP") != "1" {
 		return nil
 	}
 	if !filesystemOwnerCanReconcile() {
 		return fmt.Errorf("ownership reconciliation requires the privileged init process")
 	}
-	return reconcileDataOwnershipAt("/cauteum/data", doc)
+	return reconcileDataOwnershipAt("/cautem/data", doc)
 }
 
 func reconcileDataOwnershipAt(dataPath string, doc policy.Document) error {

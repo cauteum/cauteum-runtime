@@ -14,46 +14,46 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cautem/cauteum-runtime/relaytarget"
-	"github.com/cautem/cauteum-runtime/supervisorcontrol"
+	"github.com/cautem/cautem-runtime/relaytarget"
+	"github.com/cautem/cautem-runtime/supervisorcontrol"
 )
 
 // Run starts a parsed workload argv, forwards termination signals to its
 // process group, reaps adopted children, and returns the workload exit code.
 func Run(args []string) (int, error) {
 	if len(args) == 0 {
-		return 2, fmt.Errorf("usage: cauteum-supervisor -- <command> [args...]")
+		return 2, fmt.Errorf("usage: cautem-supervisor -- <command> [args...]")
 	}
 	var targetServer *relaytarget.Server
-	if socketPath := strings.TrimSpace(os.Getenv("CAUTEUM_RELAY_TARGET_SOCKET")); socketPath != "" {
+	if socketPath := strings.TrimSpace(os.Getenv("CAUTEM_RELAY_TARGET_SOCKET")); socketPath != "" {
 		var err error
 		targetServer, err = relaytarget.Listen(socketPath)
 		if err != nil {
-			return 125, fmt.Errorf("cauteum-supervisor: start TCP target relay: %w", err)
+			return 125, fmt.Errorf("cautem-supervisor: start TCP target relay: %w", err)
 		}
 		defer func() {
 			if err := targetServer.Close(); err != nil {
-				fmt.Fprintf(os.Stderr, "cauteum-supervisor: stop TCP target relay: %v\n", err)
+				fmt.Fprintf(os.Stderr, "cautem-supervisor: stop TCP target relay: %v\n", err)
 			}
 		}()
 	}
-	controlSocket := strings.TrimSpace(os.Getenv("CAUTEUM_SUPERVISOR_CONTROL_SOCKET"))
+	controlSocket := strings.TrimSpace(os.Getenv("CAUTEM_SUPERVISOR_CONTROL_SOCKET"))
 	instanceID := ""
 	if controlSocket != "" {
 		var err error
 		instanceID, err = beginProcessInstance(controlSocket)
 		if err != nil {
-			return 125, fmt.Errorf("cauteum-supervisor: begin OpenShell process instance: %w", err)
+			return 125, fmt.Errorf("cautem-supervisor: begin OpenShell process instance: %w", err)
 		}
 	}
 	command := exec.Command(args[0], args[1:]...)
 	command.Stdin, command.Stdout, command.Stderr = os.Stdin, os.Stdout, os.Stderr
 	command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := enableChildSubreaper(); err != nil {
-		return 125, fmt.Errorf("cauteum-supervisor: enable child reaping: %w", err)
+		return 125, fmt.Errorf("cautem-supervisor: enable child reaping: %w", err)
 	}
 	if err := command.Start(); err != nil {
-		return 127, fmt.Errorf("cauteum-supervisor: start workload: %w", err)
+		return 127, fmt.Errorf("cautem-supervisor: start workload: %w", err)
 	}
 
 	signals := make(chan os.Signal, 16)
@@ -72,7 +72,7 @@ func Run(args []string) (int, error) {
 			}
 			shutdownRequested = true
 			if err := signalWorkloadGroup(command.Process.Pid, signal); err != nil && !errors.Is(err, syscall.ESRCH) {
-				fmt.Fprintf(os.Stderr, "cauteum-supervisor: forward %s: %v\n", signal, err)
+				fmt.Fprintf(os.Stderr, "cautem-supervisor: forward %s: %v\n", signal, err)
 			}
 		case err := <-result:
 			stopWorkloadGroup(command.Process.Pid)
@@ -113,7 +113,7 @@ func workloadExitCode(err error) (int, error) {
 				return status.ExitStatus(), nil
 			}
 		}
-		return 125, fmt.Errorf("cauteum-supervisor: wait for workload: %w", err)
+		return 125, fmt.Errorf("cautem-supervisor: wait for workload: %w", err)
 	}
 	return 0, nil
 }
@@ -158,7 +158,7 @@ func lifecycleUntilAck(socket string, request supervisorcontrol.Request, operati
 		if err == nil {
 			return nil
 		}
-		fmt.Fprintf(os.Stderr, "cauteum-supervisor: %s failed; retrying: %v\n", operation, err)
+		fmt.Fprintf(os.Stderr, "cautem-supervisor: %s failed; retrying: %v\n", operation, err)
 		time.Sleep(delay)
 		if delay < 2*time.Second {
 			delay *= 2
@@ -172,12 +172,12 @@ func ParseArgs(args []string) ([]string, error) {
 	for i, arg := range args {
 		if arg == "--" {
 			if i+1 == len(args) {
-				return nil, fmt.Errorf("cauteum-supervisor: command after -- is empty")
+				return nil, fmt.Errorf("cautem-supervisor: command after -- is empty")
 			}
 			return args[i+1:], nil
 		}
 	}
-	return nil, fmt.Errorf("cauteum-supervisor: expected -- before workload command")
+	return nil, fmt.Errorf("cautem-supervisor: expected -- before workload command")
 }
 
 const shutdownGrace = 2 * time.Second

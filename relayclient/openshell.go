@@ -19,8 +19,8 @@ import (
 	"time"
 
 	openshellv1 "github.com/NVIDIA/OpenShell/sdk/go/proto/openshellv1"
-	"github.com/cautem/cauteum-core/relayproto"
-	"github.com/cautem/cauteum-runtime/supervisorcontrol"
+	"github.com/cautem/cautem-core/relayproto"
+	"github.com/cautem/cautem-runtime/supervisorcontrol"
 	"github.com/cautem/slogx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -281,9 +281,9 @@ func GRPCTarget(endpoint string) (string, bool, error) {
 // GatewayTLSConfigFromEnvironment loads the guest mTLS triplet mounted by the
 // Docker/Podman driver. Empty settings leave TLS verification to system roots.
 func GatewayTLSConfigFromEnvironment() (*tls.Config, error) {
-	caPath := strings.TrimSpace(os.Getenv("CAUTEUM_GUEST_TLS_CA"))
-	certPath := strings.TrimSpace(os.Getenv("CAUTEUM_GUEST_TLS_CERT"))
-	keyPath := strings.TrimSpace(os.Getenv("CAUTEUM_GUEST_TLS_KEY"))
+	caPath := strings.TrimSpace(os.Getenv("CAUTEM_GUEST_TLS_CA"))
+	certPath := strings.TrimSpace(os.Getenv("CAUTEM_GUEST_TLS_CERT"))
+	keyPath := strings.TrimSpace(os.Getenv("CAUTEM_GUEST_TLS_KEY"))
 	if caPath == "" && certPath == "" && keyPath == "" {
 		return nil, nil
 	}

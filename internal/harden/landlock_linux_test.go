@@ -9,16 +9,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cautem/cauteum-core/policy"
+	"github.com/cautem/cautem-core/policy"
 )
 
 func TestLandlockDefaultRuntimeBaseline(t *testing.T) {
-	const childEnv = "CAUTEUM_LANDLOCK_DEFAULT_BASELINE_CHILD"
+	const childEnv = "CAUTEM_LANDLOCK_DEFAULT_BASELINE_CHILD"
 	if os.Getenv(childEnv) == "1" {
 		if err := applyLandlock(policy.Document{}); err != nil {
 			t.Fatal(err)
 		}
-		probe := filepath.Join(os.TempDir(), "cauteum-landlock-default-baseline")
+		probe := filepath.Join(os.TempDir(), "cautem-landlock-default-baseline")
 		defer os.Remove(probe)
 		cmd := exec.Command("/bin/sh", "-c", `printf baseline > "$1" && test -r /proc/self/cmdline`, "sh", probe)
 		if output, err := cmd.CombinedOutput(); err != nil {
@@ -38,10 +38,10 @@ func TestLandlockDefaultRuntimeBaseline(t *testing.T) {
 }
 
 func TestLandlockExplicitPolicyEnforcement(t *testing.T) {
-	const childEnv = "CAUTEUM_LANDLOCK_TEST_CHILD"
+	const childEnv = "CAUTEM_LANDLOCK_TEST_CHILD"
 	if os.Getenv(childEnv) == "1" {
-		allowed := os.Getenv("CAUTEUM_LANDLOCK_TEST_ALLOWED")
-		coverageDir := os.Getenv("CAUTEUM_LANDLOCK_TEST_COVERAGE_DIR")
+		allowed := os.Getenv("CAUTEM_LANDLOCK_TEST_ALLOWED")
+		coverageDir := os.Getenv("CAUTEM_LANDLOCK_TEST_COVERAGE_DIR")
 		doc := policy.Document{FilesystemPolicy: &policy.FilesystemPolicy{
 			ReadOnly:          []string{filepath.Dir(allowed)},
 			ReadWrite:         []string{coverageDir},
@@ -71,17 +71,17 @@ func TestLandlockExplicitPolicyEnforcement(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmd := exec.Command(os.Args[0], "-test.run=^TestLandlockExplicitPolicyEnforcement$", "-test.gocoverdir="+coverageDir)
-	cmd.Env = landlockChildEnv(childEnv+"=1", "CAUTEUM_LANDLOCK_TEST_ALLOWED="+allowed, "CAUTEUM_LANDLOCK_TEST_COVERAGE_DIR="+coverageDir)
+	cmd.Env = landlockChildEnv(childEnv+"=1", "CAUTEM_LANDLOCK_TEST_ALLOWED="+allowed, "CAUTEM_LANDLOCK_TEST_COVERAGE_DIR="+coverageDir)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Landlock child failed: %v\n%s", err, output)
 	}
 }
 
 func TestLandlockFilesystemWriteGrantsEnforcement(t *testing.T) {
-	const childEnv = "CAUTEUM_LANDLOCK_WRITE_TEST_CHILD"
+	const childEnv = "CAUTEM_LANDLOCK_WRITE_TEST_CHILD"
 	if os.Getenv(childEnv) == "1" {
-		mode := os.Getenv("CAUTEUM_LANDLOCK_WRITE_TEST_MODE")
-		root := os.Getenv("CAUTEUM_LANDLOCK_WRITE_TEST_ROOT")
+		mode := os.Getenv("CAUTEM_LANDLOCK_WRITE_TEST_MODE")
+		root := os.Getenv("CAUTEM_LANDLOCK_WRITE_TEST_ROOT")
 		workdir := filepath.Join(root, "work")
 		outside := filepath.Join(root, "outside")
 		var doc policy.Document
@@ -124,7 +124,7 @@ func TestLandlockFilesystemWriteGrantsEnforcement(t *testing.T) {
 			}
 			coverageDir := filepath.Join(root, "work")
 			cmd := exec.Command(os.Args[0], "-test.run=^TestLandlockFilesystemWriteGrantsEnforcement$", "-test.gocoverdir="+coverageDir)
-			cmd.Env = landlockChildEnv(childEnv+"=1", "CAUTEUM_LANDLOCK_WRITE_TEST_MODE="+mode, "CAUTEUM_LANDLOCK_WRITE_TEST_ROOT="+root)
+			cmd.Env = landlockChildEnv(childEnv+"=1", "CAUTEM_LANDLOCK_WRITE_TEST_MODE="+mode, "CAUTEM_LANDLOCK_WRITE_TEST_ROOT="+root)
 			if output, err := cmd.CombinedOutput(); err != nil {
 				t.Fatalf("Landlock %s child failed: %v\n%s", mode, err, output)
 			}

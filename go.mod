@@ -1,4 +1,4 @@
-module github.com/cautem/cauteum-runtime
+module github.com/cautem/cautem-runtime
 
 go 1.27.0
 
@@ -6,8 +6,8 @@ toolchain go1.27.2
 
 require (
 	github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c
-	github.com/cautem/cauteum-core v0.1.5
-	github.com/cautem/cauteum-driver v0.1.5
+	github.com/cautem/cautem-core v0.1.6
+	github.com/cautem/cautem-driver v0.1.6
 	github.com/cautem/slogx v0.1.3
 	github.com/landlock-lsm/go-landlock v0.10.1
 	golang.org/x/crypto v0.57.0

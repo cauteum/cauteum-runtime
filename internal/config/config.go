@@ -12,11 +12,11 @@ type Config struct {
 	GatewayURL string
 }
 
-// Load reads CAUTEUM_* defaults.
+// Load reads CAUTEM_* defaults.
 func Load() Config {
 	return Config{
-		PolicyPath: strings.TrimSpace(os.Getenv("CAUTEUM_POLICY")),
-		LogLevel:   strings.TrimSpace(os.Getenv("CAUTEUM_LOG_LEVEL")),
-		GatewayURL: strings.TrimSpace(os.Getenv("CAUTEUM_GATEWAY_URL")),
+		PolicyPath: strings.TrimSpace(os.Getenv("CAUTEM_POLICY")),
+		LogLevel:   strings.TrimSpace(os.Getenv("CAUTEM_LOG_LEVEL")),
+		GatewayURL: strings.TrimSpace(os.Getenv("CAUTEM_GATEWAY_URL")),
 	}
 }

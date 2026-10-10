@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cautem/cauteum-core"
-	"github.com/cautem/cauteum-core/policy"
-	"github.com/cautem/cauteum-driver/driver"
+	"github.com/cautem/cautem-core"
+	"github.com/cautem/cautem-core/policy"
+	"github.com/cautem/cautem-driver/driver"
 )
 
 const rollbackTimeout = 30 * time.Second

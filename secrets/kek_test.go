@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cautem/cauteum-runtime/secrets"
+	"github.com/cautem/cautem-runtime/secrets"
 )
 
 func TestInspectPinnedEnv(t *testing.T) {
@@ -71,7 +71,7 @@ func TestParseEnvKEKFormats(t *testing.T) {
 }
 
 func TestPinnedKEKSurvivesEmptyDirRecreate(t *testing.T) {
-	// Simulates compose recreate with CAUTEUM_SECRETS_KEK set and a fresh data dir
+	// Simulates compose recreate with CAUTEM_SECRETS_KEK set and a fresh data dir
 	// that still must decrypt values written under the same KEK elsewhere —
 	// here: same env across two dirs proves key identity.
 	t.Setenv(secrets.EnvKEK, "prod-pinned-kek-material")

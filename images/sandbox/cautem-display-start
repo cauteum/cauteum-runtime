@@ -2,30 +2,30 @@
 # Start Xvfb + openbox + x11vnc + websockify/noVNC (loopback inside container).
 set -eu
 DISPLAY="${DISPLAY:-:99}"
-PASS="${CAUTEUM_VNC_PASSWORD:-cauteum}"
-GEOM="${CAUTEUM_DISPLAY_GEOM:-1280x800x24}"
+PASS="${CAUTEM_VNC_PASSWORD:-cautem}"
+GEOM="${CAUTEM_DISPLAY_GEOM:-1280x800x24}"
 NOVNC_WEB="${NOVNC_WEB:-/usr/share/novnc}"
-RFB_PORT="${CAUTEUM_VNC_PORT:-5900}"
-HTTP_PORT="${CAUTEUM_NOVNC_PORT:-6080}"
+RFB_PORT="${CAUTEM_VNC_PORT:-5900}"
+HTTP_PORT="${CAUTEM_NOVNC_PORT:-6080}"
 
-mkdir -p /tmp/.X11-unix /tmp/cauteum-display /var/run/osg
+mkdir -p /tmp/.X11-unix /tmp/cautem-display /var/run/osg
 chmod 1777 /tmp/.X11-unix
 
 # Password file for x11vnc (-passwdfile avoids argv visibility a bit).
-PASSFILE=/tmp/cauteum-display/vnc.pass
+PASSFILE=/tmp/cautem-display/vnc.pass
 printf '%s\n' "$PASS" >"$PASSFILE"
 chmod 600 "$PASSFILE"
 
 if ! command -v Xvfb >/dev/null; then
-  echo "cauteum-display: Xvfb not installed (use cauteum-sandbox:gui image)" >&2
+  echo "cautem-display: Xvfb not installed (use cautem-sandbox:gui image)" >&2
   exit 1
 fi
 
-Xvfb "$DISPLAY" -screen 0 "$GEOM" -ac +extension GLX +render -noreset >/tmp/cauteum-display/xvfb.log 2>&1 &
+Xvfb "$DISPLAY" -screen 0 "$GEOM" -ac +extension GLX +render -noreset >/tmp/cautem-display/xvfb.log 2>&1 &
 sleep 0.4
-openbox >/tmp/cauteum-display/openbox.log 2>&1 &
+openbox >/tmp/cautem-display/openbox.log 2>&1 &
 x11vnc -display "$DISPLAY" -forever -shared -rfbport "$RFB_PORT" -localhost \
-  -passwdfile "$PASSFILE" -quiet >/tmp/cauteum-display/x11vnc.log 2>&1 &
+  -passwdfile "$PASSFILE" -quiet >/tmp/cautem-display/x11vnc.log 2>&1 &
 
 if [ ! -d "$NOVNC_WEB" ]; then
   # alternate novnc package layout
@@ -35,6 +35,6 @@ if [ ! -d "$NOVNC_WEB" ]; then
 fi
 
 websockify --web="$NOVNC_WEB" "$HTTP_PORT" "localhost:$RFB_PORT" \
-  >/tmp/cauteum-display/websockify.log 2>&1 &
+  >/tmp/cautem-display/websockify.log 2>&1 &
 
-echo "cauteum-display: novnc listening on 0.0.0.0:${HTTP_PORT} (publish host loopback only)" >&2
+echo "cautem-display: novnc listening on 0.0.0.0:${HTTP_PORT} (publish host loopback only)" >&2

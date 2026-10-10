@@ -1,4 +1,4 @@
-// Package wsinit is the composition root for cauteum-init.
+// Package wsinit is the composition root for cautem-init.
 package wsinit
 
 import (
@@ -11,12 +11,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/cautem/cauteum-core/policy"
-	"github.com/cautem/cauteum-runtime/internal/harden"
+	"github.com/cautem/cautem-core/policy"
+	"github.com/cautem/cautem-runtime/internal/harden"
 )
 
 func Run(args []string) error {
-	policyPath := os.Getenv("CAUTEUM_POLICY")
+	policyPath := os.Getenv("CAUTEM_POLICY")
 	mode := harden.Mode("")
 	probe := false
 	noDrop := false
@@ -27,13 +27,13 @@ func Run(args []string) error {
 		case "--policy":
 			i++
 			if i >= len(args) {
-				return fmt.Errorf("cauteum-init: --policy needs a value")
+				return fmt.Errorf("cautem-init: --policy needs a value")
 			}
 			policyPath = args[i]
 		case "--mode":
 			i++
 			if i >= len(args) {
-				return fmt.Errorf("cauteum-init: --mode needs a value")
+				return fmt.Errorf("cautem-init: --mode needs a value")
 			}
 			mode = harden.Mode(args[i])
 		case "--probe":
@@ -44,11 +44,11 @@ func Run(args []string) error {
 			cmd = args[i+1:]
 			i = len(args)
 		case "-h", "--help":
-			fmt.Fprintf(os.Stderr, "usage: cauteum-init [--probe] [--policy PATH] [--mode best_effort|required] [--no-drop] -- <cmd>...\n")
+			fmt.Fprintf(os.Stderr, "usage: cautem-init [--probe] [--policy PATH] [--mode best_effort|required] [--no-drop] -- <cmd>...\n")
 			return nil
 		default:
 			if strings.HasPrefix(args[i], "-") {
-				return fmt.Errorf("cauteum-init: unknown flag %q", args[i])
+				return fmt.Errorf("cautem-init: unknown flag %q", args[i])
 			}
 			cmd = args[i:]
 			i = len(args)
@@ -74,10 +74,10 @@ func Run(args []string) error {
 		}
 		doc, err = policy.Load(abs)
 		if err != nil {
-			return fmt.Errorf("cauteum-init: policy: %w", err)
+			return fmt.Errorf("cautem-init: policy: %w", err)
 		}
 		if err := doc.Validate(); err != nil {
-			return fmt.Errorf("cauteum-init: policy: %w", err)
+			return fmt.Errorf("cautem-init: policy: %w", err)
 		}
 	} else {
 		doc = policy.Document{Version: 1}
@@ -98,7 +98,7 @@ func Run(args []string) error {
 	_ = res
 
 	if len(cmd) == 0 {
-		return fmt.Errorf("cauteum-init: missing command (use -- <cmd>...)")
+		return fmt.Errorf("cautem-init: missing command (use -- <cmd>...)")
 	}
 	bin, err := exec.LookPath(cmd[0])
 	if err != nil {

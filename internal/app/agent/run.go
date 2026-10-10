@@ -1,4 +1,4 @@
-// Package agent is the composition root for cauteum-agent.
+// Package agent is the composition root for cautem-agent.
 package agent
 
 import (
@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cautem/cauteum-runtime/internal/logging"
+	"github.com/cautem/cautem-runtime/internal/logging"
 	"github.com/cautem/slogx"
 )
 
@@ -22,12 +22,12 @@ func Run(args []string) error {
 	const op = "agent.run"
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	log := logging.Setup(ctx, logging.Options{Service: "cauteum-agent"})
+	log := logging.Setup(ctx, logging.Options{Service: "cautem-agent"})
 	ctx = logging.ToContext(ctx, log)
 	log = log.With(slog.String("op", op))
 
-	gateway := os.Getenv("CAUTEUM_GATEWAY")
-	name := os.Getenv("CAUTEUM_SANDBOX")
+	gateway := os.Getenv("CAUTEM_GATEWAY")
+	name := os.Getenv("CAUTEM_SANDBOX")
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--gateway":
@@ -37,14 +37,14 @@ func Run(args []string) error {
 			i++
 			name = args[i]
 		case "-h", "--help":
-			fmt.Fprintf(os.Stderr, "usage: cauteum-agent --gateway URL --name SANDBOX\n")
+			fmt.Fprintf(os.Stderr, "usage: cautem-agent --gateway URL --name SANDBOX\n")
 			return nil
 		default:
 			return fmt.Errorf("unknown flag %q", args[i])
 		}
 	}
 	if gateway == "" || name == "" {
-		return fmt.Errorf("cauteum-agent: --gateway and --name required")
+		return fmt.Errorf("cautem-agent: --gateway and --name required")
 	}
 	base := strings.TrimRight(gateway, "/")
 	log.Info("registering with gateway", slog.String("sandbox", name), slog.String("gateway", base))

@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/cautem/cauteum-core/policy"
+	"github.com/cautem/cautem-core/policy"
 )
 
 func TestPrepareReadWritePathsCreatesAndOwnsMissingDirectory(t *testing.T) {
@@ -97,7 +97,7 @@ func TestReconcileDataOwnershipRejectsSymlinkRoot(t *testing.T) {
 }
 
 func TestReconcilePersistentDataOwnershipIsOptIn(t *testing.T) {
-	t.Setenv("CAUTEUM_RECONCILE_DATA_OWNERSHIP", "0")
+	t.Setenv("CAUTEM_RECONCILE_DATA_OWNERSHIP", "0")
 	if err := reconcilePersistentDataOwnership(policy.Document{}); err != nil {
 		t.Fatalf("disabled reconciliation returned error: %v", err)
 	}
